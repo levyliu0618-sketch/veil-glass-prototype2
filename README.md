@@ -1,32 +1,31 @@
-# Veil Glass prototype
+# Veil — Glass sheet (Levy's revision)
 
-A clickable prototype of a glass "veil" that sits on a coding agent and explains its work to a designer or PM, using explainable-AI ideas in plain language.
+**Live:** https://levyliu0618-sketch.github.io/veil-glass-prototype2/
+**Why these changes:** https://levyliu0618-sketch.github.io/veil-glass-prototype2/#why
 
-**Live:** https://saoumyamandy.github.io/veil-glass-prototype/
+A fork of [Saoumya's Veil Glass prototype](https://github.com/saoumyamandy/veil-glass-prototype), for the Agent Veil group (UC Berkeley HCI). The simulated run, the Lumen app and the agent's behaviour are hers and unchanged. This revision changes how the veil is organised and how it reads. It is a proposal for discussion, not a team decision.
 
-A simulated agent adds a pricing page to Lumen, a made-up app. Its raw terminal runs under the glass, and the page it is building updates live on the right. The veil's layers come from the Agent Veil playground, renamed for non-technical readers: what it's saying, thinking and doing, the raw work, who it asked for help, and how the page changed.
+A simulated coding agent adds a pricing page to Lumen, a made-up app. Its raw terminal runs under a frosted glass sheet; the page it builds updates on the right.
+
+## What changed in this revision
+
+- **One light, neutral workspace.** The glass is the only translucent surface. It signals "there is more underneath"; the cards on it are solid so they read clearly in every view.
+- **What vs. where.** The six views (Result → Everything) are the main control, shown as separate modes with dots for the layers each lets through: rung 5 swaps actions for thinking rather than adding to rung 4. Glass placement (cover, pin left, fold away) is a small, secondary icon group.
+- **Phases.** The feed is grouped by what the agent is doing. Earlier phases fold to a header, the agent's last line and what's inside; the current phase stays open. Reading older work no longer gets interrupted by new activity ("New activity ↓").
+- **More room for the page.** Run info is one quiet line. Claims vs. checks, change log and layers fold into one bar with a summary and open on click.
+- **Finished ≠ verified.** The header shows "The agent has finished" separately from "2 of 3 claims checked". Questions for you always show, in every view.
+- **Lens removed**, following the team's decision to continue with the glass sheet.
 
 ## What you can try
 
-Use the bar at the top to switch versions, pause, skip ahead or restart.
-
-- **Glass sheet.** A frosted sheet covers the terminal. The dial runs from Result to Everything, and the glass clears as it shows more. Hover a card and its raw lines glow underneath. The header buttons cover the work, pin the sheet to the left, or collapse it to a strip.
-- **Lens.** The whole window is frosted. Drag the lens over the terminal to read the raw lines and see them in plain words. Drag it over the page to see which steps built each part. Scroll on it, or press + and −, to look deeper.
-
-In both versions you can:
-
-- Ask **Why?** on any step to see the thinking behind it.
-- Say **Not that** to the agent's choice of switch, and watch it redo the work with your component.
-- Answer the question it asks about the yearly saving.
-- Open **Claims vs checks** to see each claim beside the check behind it and whether that check passed. A failed test cracks the glass. Its "looks right on mobile" claim was never checked: switch the preview to Phone, then ask it to check.
-- Read the **Change log** of everything you revealed, asked or redirected.
+Start the agent, switch views, open a phase, ask **Why?**, say **Not that**, answer the agent's question, open **Claims vs checks**, preview on **Phone** and **Ask it to check** the mobile claim, step through page versions in **Everything**.
 
 ## Running it locally
 
-It is plain HTML, CSS and JavaScript modules, so it needs a static server rather than a `file://` URL:
+Plain HTML, CSS and JavaScript modules; serve it rather than opening `file://`:
 
 ```bash
 python3 -m http.server 8000
 ```
 
-Then open http://localhost:8000. All data is made up.
+All data is made up. No model is called and nothing you do is recorded or sent.

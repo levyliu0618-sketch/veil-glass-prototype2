@@ -168,9 +168,9 @@ function steerButton(ev, ui, cardId) {
 }
 
 const STATUS_LABEL = {
-  checked: ['ok', '✓ Checked'],
-  fixed: ['ok', '↻ Fixed after a failed check'],
-  failed: ['bad', '✕ Check failed'],
+  checked: ['ok', '✓ Checked · passed'],
+  fixed: ['ok', '✓ Passed after a fix'],
+  failed: ['bad', '✕ Checked · failed'],
   unchecked: ['warn', '⚠ Not checked'],
   checking: ['warn', '… Checking now'],
 };
@@ -208,7 +208,7 @@ export function cardHTML(ev, ctx) {
       const unchecked = ev.claims?.some(t => E.claims.get(t.id) && E.claimStatus(E.claims.get(t.id)).state === 'unchecked');
       const foot = whyBtn + steerButton(ev, ui, ev.id);
       return `<article class="card card--say${L.verify && unchecked ? ' is-unchecked' : ''}" data-evt="${ev.id}">
-        <header><span class="tag">Said</span>${time}</header>
+        <header><span class="tag tag--say">Commentary</span>${time}</header>
         <p class="said">${esc(text)}</p>${more}${claims}
         ${ev.decision ? decisionHTML(ev, ui, ev.id) : ''}${why}
         ${foot ? `<footer>${foot}</footer>` : ''}
@@ -228,7 +228,7 @@ export function cardHTML(ev, ctx) {
 
     case 'tool': {
       const fail = !running && ev.ok === false;
-      const tag = ev.check ? `Check · ${ev.tool}` : `Did · ${ev.tool}`;
+      const tag = ev.check ? `Check · <code>${esc(ev.tool)}</code>` : `Action · <code>${esc(ev.tool)}</code>`;
       const result = running
         ? '<p class="result running">Working…</p>'
         : `<p class="result ${fail ? 'bad' : ev.check ? 'ok' : ''}">${fail ? '✕' : ev.check ? '✓' : '→'} ${esc(ev.result)}</p>`;
@@ -236,7 +236,7 @@ export function cardHTML(ev, ctx) {
       const raw = L.full ? `<pre class="raw"><b>$ ${esc(ev.cmd)}</b>${running ? '\n…' : ev.out ? '\n' + esc(ev.out) : ''}</pre>` : '';
       return `<article class="card card--tool${fail ? ' is-fail' : ''}${running ? ' is-running' : ''}${gone}" data-evt="${ev.id}">
         ${fail ? CRACK : ''}
-        <header><span class="tag">${fail ? 'Check failed · ' + esc(ev.tool) : tag}</span>${time}</header>
+        <header><span class="tag">${fail ? 'Check failed · <code>' + esc(ev.tool) + '</code>' : tag}</span>${time}</header>
         ${summary}${raw}${goneNote}${why}
         ${whyBtn ? `<footer>${whyBtn}</footer>` : ''}
       </article>`;
@@ -495,7 +495,7 @@ export function mountPreview(host, ctx, opts = {}) {
       scale();
     }
     banner.hidden = !v;
-    if (v) banner.innerHTML = `Viewing version ${v} of ${E.versions.length}: ${esc(E.versions[v - 1].label)} <button data-act="version" data-v="0">Back to latest</button>`;
+    if (v) banner.innerHTML = `<span>Looking back at <b>version ${v} of ${E.versions.length}</b>: ${esc(E.versions[v - 1].label)}. This doesn't change the latest page.</span> <button data-act="version" data-v="0">Back to latest</button>`;
     const showVersions = L.versions >= 2 && E.versions.length > 0;
     versions.hidden = !showVersions;
     if (showVersions) {
@@ -512,13 +512,7 @@ export function mountPreview(host, ctx, opts = {}) {
 /* ---------- receipt, claims, change log, layers ---------- */
 
 export function receiptHTML(E) {
-  return `<div class="receipt" aria-label="Receipt">
-    <span><small>Model</small>${RECEIPT.model}</span>
-    <span><small>Effort</small>${RECEIPT.effort}</span>
-    <span><small>Tokens</small>${E.tokens.toLocaleString()}</span>
-    <span><small>Cost so far</small>$${((E.tokens / 1000) * RECEIPT.pricePerK).toFixed(2)}</span>
-    <span><small>Time</small>${fmt(E.clock)}</span>
-  </div>`;
+  return `<p class="receipt" aria-label="Run information"><span class="r-k">Run</span>${RECEIPT.model} · ${RECEIPT.effort} · ${E.tokens.toLocaleString()} tokens · $${((E.tokens / 1000) * RECEIPT.pricePerK).toFixed(2)} so far · ${fmt(E.clock)}</p>`;
 }
 
 function claimRow(c, E) {
@@ -589,19 +583,34 @@ export function layersPanel(layers, opts = {}) {
     <label class="verify"><input type="checkbox" data-change="verify" ${L.verify ? 'checked' : ''}> Mark claims on the cards as checked or not</label>`;
 }
 
+function claimSummary(E) {
+  const claims = [...E.claims.values()];
+  if (!claims.length) return E.started ? 'No claims yet' : '';
+  const st = claims.map(c => E.claimStatus(c).state);
+  const ok = st.filter(x => x === 'checked' || x === 'fixed').length;
+  const bad = st.filter(x => x === 'failed').length;
+  const un = claims.length - ok - bad;
+  return [`${claims.length} claim${claims.length === 1 ? '' : 's'}`, ok && `<span class="ok">${ok} passed</span>`, bad && `<span class="bad">${bad} failed</span>`, un && `<span class="warn">${un} not checked</span>`]
+    .filter(Boolean).join(' · ');
+}
+
 export function dockHTML(ctx, opts = {}) {
   const E = ctx.engine;
   const tab = ctx.ui.tab;
-  const n = E.claims.size + E.failedChecks().length;
+  const open = !!ctx.ui.dockOpen;
   const tabs = [
-    ['claims', `Claims vs checks${n ? ` <i>${n}</i>` : ''}`],
+    ['claims', 'Claims vs checks'],
     ['log', `Change log${E.changes.length ? ` <i>${E.changes.length}</i>` : ''}`],
     ['layers', 'Layers'],
   ];
-  const body = tab === 'claims' ? claimsPanel(E) : tab === 'log' ? changesPanel(E) : layersPanel(ctx.layers, opts.layers);
-  return `<div class="tabs" role="tablist">${tabs
-    .map(([id, label]) => `<button role="tab" aria-selected="${tab === id}" data-act="tab" data-tab="${id}">${label}</button>`)
-    .join('')}</div><div class="tabbody" data-tab="${tab}">${body}</div>`;
+  const body = !open ? '' : tab === 'claims' ? claimsPanel(E) : tab === 'log' ? changesPanel(E) : layersPanel(ctx.layers, opts.layers);
+  return `<div class="dock-bar">
+      <div class="tabs" role="tablist">${tabs
+        .map(([id, label]) => `<button role="tab" aria-selected="${open && tab === id}" aria-expanded="${open && tab === id}" data-act="tab" data-tab="${id}">${label}</button>`)
+        .join('')}</div>
+      <span class="dock-sum">${claimSummary(E)}</span>
+      ${open ? '<button class="icon-btn" data-act="dock-close" aria-label="Fold the panel" title="Fold the panel"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6.5 8 10.5l4-4"/></svg></button>' : ''}
+    </div>${open ? `<div class="tabbody" data-tab="${tab}">${body}</div>` : ''}`;
 }
 
 // Re-renders the dock but keeps the reader's scroll position in the open tab.
@@ -612,7 +621,8 @@ export function updateDock(el, ctx, opts) {
   if (html === el._last) return;
   el._last = html;
   el.innerHTML = html;
-  el.querySelector('.tabbody').scrollTop = keep;
+  const nb = el.querySelector('.tabbody');
+  if (nb) nb.scrollTop = keep;
 }
 
 export function briefHTML() {
