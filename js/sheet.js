@@ -277,8 +277,8 @@ export function mountSheet(root, ctx) {
     // The glass still clears a little as the view lets more through, but the cards on it
     // are solid, so reading never depends on how frosted the glass is.
     const c = clarity(ctx.layers.v);
-    sheet.style.setProperty('--frost', `${(20 - 6 * c).toFixed(1)}px`);
-    sheet.style.setProperty('--tint', (0.84 - 0.1 * c).toFixed(3));
+    sheet.style.setProperty('--frost', `${(24 - 10 * c).toFixed(1)}px`);
+    sheet.style.setProperty('--tint', (0.6 - 0.12 * c).toFixed(3));
   }
 
   // Pinning or folding the veil uncovers the terminal. When the raw-work layer is off, a frost

@@ -9,7 +9,7 @@ A simulated coding agent adds a pricing page to Lumen, a made-up app. Its raw te
 
 ## What changed in this revision
 
-- **Look.** One quiet, slightly warm ground for the whole app (a wide, soft greige wash, no edges between areas). The terminal is written on that ground; the veil is a thin warm frosted sheet over it, so the work underneath shows as a faint texture. Everything you read is a warm-white block. Colour only marks state. Type: Outfit for display, Inter for text, JetBrains Mono for code.
+- **Look.** A soft, low-saturation mist behind the whole app. Under the veil, the agent works on a smoky grey-blue ground in white type; the veil is a light frosted pane with a bright edge, the only container. Process lines are rows with hairlines; only questions and failed checks are cards. Compact controls, Inter throughout.
 - **What vs. where.** Six views (Result → Everything) are the main control, with dots for the layers each lets through. Glass placement (cover, pin left, fold away) is small and secondary.
 - **Phases.** The feed is grouped by what the agent is doing. A folded phase shows a written summary and what is inside; a phase with a failed check says whether it was fixed and re-checked. Reading older work isn't interrupted by new activity.
 - **Requirements** next to the task: what the page should do, including the yearly price rule, marked "from the brief" or "proposed for this demo".

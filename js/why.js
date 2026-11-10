@@ -92,7 +92,7 @@ const QUESTIONS = [
 ];
 
 const CHANGES = [
-  ['Look', 'One quiet, slightly warm ground for the whole app: a wide, soft wash of close greige tones with no edges between areas. The agent’s terminal is written straight onto that ground, and the veil is a thin warm frosted sheet over it, so the work underneath shows only as a faint texture. Everything you read sits on warm-white blocks; the same blocks hold the page and the checks. Colour only marks state, in small chips.'],
+  ['Look', 'A soft, low-saturation mist behind the whole app. Under the veil, the agent works on a smoky grey-blue ground in white type, so the glass has real light and dark to soften. The veil is a light frosted pane with a bright edge; dark type sits on near-white frost so it reads cleanly. It is the only container: ordinary process lines are rows with hairlines, and only a question for you and a failed check are cards. Colour only marks state.'],
   ['Controls', 'What the veil shows (six views) is the main control. Where the glass sits (cover, pin, fold) is small and secondary.'],
   ['Process', 'Grouped into phases. A folded phase shows a written summary of the whole phase and what is inside it. A phase with a failed check keeps saying so, and says when it was fixed and re-checked.'],
   ['Requirements', 'A Requirements panel next to the task lists what “right” looks like, including the yearly rule, so people can judge the page without digging through the agent’s log. Each line says whether it came from the brief or is proposed for this demo (not yet team-agreed).'],

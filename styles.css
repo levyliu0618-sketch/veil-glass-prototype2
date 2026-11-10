@@ -495,3 +495,83 @@ body[data-page="why"] .narrow-note { display: none !important; }
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
   .crack path { stroke-dashoffset: 0; }
 }
+
+/* ---------- final pass: the mist ground + a clearly visible frosted veil ---------- */
+
+body {
+  background:
+    radial-gradient(70% 80% at 5% 5%, rgba(224, 212, 198, 0.8), transparent 70%),
+    radial-gradient(60% 70% at 25% 100%, rgba(222, 226, 208, 0.65), transparent 72%),
+    radial-gradient(75% 85% at 100% 35%, rgba(188, 199, 211, 0.75), transparent 72%),
+    linear-gradient(180deg, #e4e5e6, #d9dcdf);
+  background-attachment: fixed;
+}
+.bar { background: transparent; border-bottom-color: rgba(255, 255, 255, 0.55); }
+.bar-btn { background: rgba(255, 255, 255, 0.45); border-color: rgba(255, 255, 255, 0.75); }
+.bar-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.85); }
+.bar-btn:disabled { background: rgba(255, 255, 255, 0.2); border-color: rgba(255, 255, 255, 0.4); }
+.seg { background: rgba(255, 255, 255, 0.4); }
+.task:hover, .task[aria-expanded="true"] { background: rgba(255, 255, 255, 0.6); }
+.task-reqs { background: rgba(255, 255, 255, 0.6); border-color: rgba(255, 255, 255, 0.8); }
+
+/* Under the veil: smoky grey-blue with soft glows and white terminal type, so the glass has
+   real light and dark to soften. */
+.agent-pane {
+  background:
+    radial-gradient(60% 45% at 12% 8%, rgba(214, 196, 176, 0.42), transparent 70%),
+    radial-gradient(50% 40% at 88% 92%, rgba(206, 214, 182, 0.3), transparent 70%),
+    radial-gradient(60% 50% at 80% 30%, rgba(150, 166, 184, 0.5), transparent 70%),
+    linear-gradient(165deg, #6c7682, #5d6874 55%, #55606b);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+}
+.terminal { color: rgba(255, 255, 255, 0.84); }
+.tl-prompt, .tl-status { color: rgba(255, 255, 255, 0.55); }
+.tl-prompt b { color: #fff; }
+.tl-say, .tl-q { color: #fff; }
+.tl-think { color: #ece8ff; }
+.tl-tool { color: #e3ebf6; }
+.tl-tool b { color: #fff; }
+.tl-out { color: rgba(255, 255, 255, 0.68); }
+.tl-out.is-bad { color: #ffd4cc; }
+.tl-out.is-good { color: #d8efdf; }
+.tl-out.is-dim { color: rgba(255, 255, 255, 0.42); }
+.tl-art { color: #f3e4c4; }
+.tl-cursor { color: #fff; }
+.tb.is-lit { background: rgba(255, 255, 255, 0.22); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6), 0 0 40px rgba(255, 255, 255, 0.45); }
+.raw-veil { background: rgba(93, 104, 116, 0.3); backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px); }
+.raw-veil-note, .raw-veil-note b { color: #fff; }
+.raw-veil-note span { color: rgba(255, 255, 255, 0.72); }
+.raw-veil .chip-btn { border: 0; }
+
+/* The veil: a light frosted pane, clearly lighter than what is under it, with a bright edge.
+   Dark type sits on near-white frost, so it reads cleanly. */
+.glass-sheet {
+  background: linear-gradient(165deg,
+    rgba(255, 255, 255, calc(var(--tint) + 0.12)) 0%,
+    rgba(255, 255, 255, var(--tint)) 45%,
+    rgba(255, 255, 255, calc(var(--tint) - 0.06)) 100%);
+  backdrop-filter: blur(var(--frost)) saturate(130%); -webkit-backdrop-filter: blur(var(--frost)) saturate(130%);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 18px 44px rgba(30, 38, 48, 0.25);
+  border-radius: 12px;
+}
+.glass-sheet::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.28), transparent 30%, transparent 75%, rgba(255, 255, 255, 0.12));
+}
+.sheet-head, .dial { position: relative; border-color: rgba(30, 38, 48, 0.09); }
+.phase-head + .phase-head, .in-phase + .phase-head { border-top-color: rgba(30, 38, 48, 0.09); }
+.card { border-top-color: rgba(30, 38, 48, 0.08); }
+.raw { background: rgba(255, 255, 255, 0.55); border-color: rgba(30, 38, 48, 0.08); }
+.card.is-fail, .card--q { background: rgba(255, 255, 255, 0.82); }
+.card--q { background: rgba(255, 253, 247, 0.9); }
+.modes { background: rgba(30, 38, 48, 0.06); }
+.chip-btn { background: rgba(255, 255, 255, 0.7); }
+.verify-state, .tag, .card time, .phase-head time, .clock, .phase-meta, .dial-k { color: #5f666f; }
+
+/* Right column echoes the glass: white page, frosted checks bar. */
+.browser { border-color: rgba(255, 255, 255, 0.8); box-shadow: 0 16px 40px rgba(40, 52, 66, 0.12); }
+.dock { background: rgba(255, 255, 255, 0.6); border-color: rgba(255, 255, 255, 0.8); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+.changes-list, .table-wrap { background: rgba(255, 255, 255, 0.75); border-color: rgba(255, 255, 255, 0.85); }
+
+.browser .seg, .tabbody .seg { background: #e3e6ea; }
