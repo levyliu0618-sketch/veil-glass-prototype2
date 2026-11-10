@@ -36,7 +36,7 @@ export const KEY_NAMES = {
 const KIND_NAMES = { plan: 'Plan', observation: 'Observation', 'self-correction': 'Self-correction', decision: 'Decision' };
 
 export function createLayers(engine) {
-  const v = { ...RUNGS[2].set, verify: false };
+  const v = { ...RUNGS[2].set, verify: false, checksAlways: false };
   const listeners = new Set();
   const layers = {
     v,
@@ -58,6 +58,11 @@ export function createLayers(engine) {
       v[key] = val;
       listeners.forEach(fn => fn());
     },
+    setChecksAlways(on) {
+      v.checksAlways = on;
+      engine.note(`Claims vs checks in every view: ${on ? 'on' : 'off'}`);
+      listeners.forEach(fn => fn());
+    },
     setVerify(on) {
       v.verify = on;
       engine.note(`Claim marks on the cards: ${on ? 'on' : 'off'}`);
@@ -66,6 +71,18 @@ export function createLayers(engine) {
     sig: () => JSON.stringify(v),
   };
   return layers;
+}
+
+// Claims are things the agent SAYS, so they follow its commentary. The check behind a claim
+// is an action, so its details follow the actions layers. "In every view" overrides both,
+// for a study condition where verification is always offered.
+export const claimsVisible = L => L.verbosity >= 2 || L.checksAlways;
+export const checkDetailsVisible = L => L.summary >= 1 || L.full >= 1 || L.checksAlways;
+
+// Which page version was current when something happened.
+export function versionAt(E, t) {
+  const v = E.versions.filter(x => !x.superseded && x.at <= t).pop() || E.versions.filter(x => x.at <= t).pop();
+  return v ? v.v : null;
 }
 
 // How clear the glass is, 0 (frosted) to 1 (clear), from what the layers reveal.
@@ -515,44 +532,52 @@ export function receiptHTML(E) {
   return `<p class="receipt" aria-label="Run information"><span class="r-k">Run</span>${RECEIPT.model} · ${RECEIPT.effort} · ${E.tokens.toLocaleString()} tokens · $${((E.tokens / 1000) * RECEIPT.pricePerK).toFixed(2)} so far · ${fmt(E.clock)}</p>`;
 }
 
-function claimRow(c, E) {
+function claimRow(c, E, L) {
   const st = E.claimStatus(c);
   const [tone, label] = STATUS_LABEL[st.state];
   let body = '';
   if (st.checks.length) {
-    body = st.checks
-      .map(x => `<li class="${x.ok ? 'ok' : 'bad'}"><span>${x.ok ? '✓' : '✕'} ${esc(x.plain)}</span><time>${fmt(x.at)}</time><em>${esc(x.result)}</em></li>`)
-      .join('');
-    body = `<ul class="checks">${body}</ul>`;
+    body = checkDetailsVisible(L)
+      ? `<ul class="checks">${st.checks
+          .map(x => `<li class="${x.ok ? 'ok' : 'bad'}"><span>${x.ok ? '✓' : '✕'} ${esc(x.plain)}</span><time>${fmt(x.at)} · on v${versionAt(E, x.at) ?? '–'}</time><em>${esc(x.result)}</em></li>`)
+          .join('')}</ul>`
+      : '<p class="nocheck">The check behind this is an action, and actions are hidden in this view.</p>';
   } else {
     const near = c.nearMiss && E.byId.get(c.nearMiss);
-    body = `<p class="nocheck">Nothing checked this.${near ? ` The only check nearby: “${esc(near.plain)}”.` : ''}</p>`;
+    body = `<p class="nocheck">Nothing checked this.${near && checkDetailsVisible(L) ? ` The only check nearby: “${esc(near.plain)}”.` : ''}</p>`;
     if (c.fix && !c.asked) body += `<button class="chip-btn steer" data-act="ask-check" data-id="${c.id}">Ask it to check</button>`;
   }
   return `<div class="claim ${tone}"><div class="claim-top"><q>${esc(c.text)}</q><time>${fmt(c.at)}</time></div><span class="claim-chip ${tone}">${label}</span>${body}</div>`;
 }
 
-export function claimsPanel(E, onlyKey) {
+export function claimsPanel(E, onlyKey, ctx) {
+  const L = ctx ? ctx.layers.v : { verbosity: 3, summary: 1, full: 1 };
+  if (!claimsVisible(L)) {
+    return '<p class="empty">Claims are things the agent says it did. This view hides its commentary, so its claims, and the checks behind them, are hidden too. You can change this under Layers.</p>';
+  }
   let claims = [...E.claims.values()];
   if (onlyKey) claims = claims.filter(c => E.byId.get(c.by)?.touches?.includes(onlyKey));
-  const failed = onlyKey ? [] : E.failedChecks();
+  const failed = onlyKey || !checkDetailsVisible(L) ? [] : E.failedChecks();
   if (!claims.length && !failed.length) {
     return onlyKey ? '' : '<p class="empty">No claims yet. When the agent says something is done or works, it appears here next to the check behind it, and how that check went.</p>';
   }
-  const states = claims.map(c => E.claimStatus(c).state);
-  const ok = states.filter(s => s === 'checked' || s === 'fixed').length;
-  const sum = onlyKey ? '' : `<p class="sum">${claims.length} claim${claims.length === 1 ? '' : 's'} · ${ok} checked · ${claims.length - ok} not checked</p>`;
+  // Looking back at an older page: say which version the checks ran on.
+  const viewing = ctx && ctx.ui.viewVersion;
+  const latest = E.versions.length;
+  const note = viewing && viewing !== latest
+    ? `<p class="ver-note">You're looking at <b>version ${viewing}</b>. Each check below shows the version it ran on; the newest ran on v${versionAt(E, Math.max(...[...E.claims.values()].flatMap(c => E.claimStatus(c).checks.map(x => x.at)), 0)) ?? latest}, not v${viewing}.</p>`
+    : '';
   const fails = failed.length
     ? `<h4>Checks that failed</h4>${failed
         .map(
           ({ f, passedBy }) =>
-            `<div class="claim bad"><div class="claim-top"><q>${esc(f.result)}</q><time>${fmt(f.at)}</time></div><p class="nocheck">${
-              passedBy ? `Fixed, then passed: “${esc(passedBy.plain)}” at ${fmt(passedBy.at)}.` : 'Not passed yet.'
+            `<div class="claim bad"><div class="claim-top"><q>${esc(f.result)}</q><time>${fmt(f.at)} · on v${versionAt(E, f.at) ?? '–'}</time></div><p class="nocheck">${
+              passedBy ? `Fixed, then passed: “${esc(passedBy.plain)}” at ${fmt(passedBy.at)}, on v${versionAt(E, passedBy.at) ?? '–'}.` : 'Not passed yet.'
             }</p></div>`,
         )
         .join('')}`
     : '';
-  return sum + claims.map(c => claimRow(c, E)).join('') + fails;
+  return note + claims.map(c => claimRow(c, E, L)).join('') + fails;
 }
 
 export function changesPanel(E) {
@@ -580,10 +605,12 @@ export function layersPanel(layers, opts = {}) {
     </div>`,
   ).join('');
   return `${opts.intro ? `<p class="sum">${opts.intro}</p>` : ''}<div class="rungs">${rungs}</div>${rows}
-    <label class="verify"><input type="checkbox" data-change="verify" ${L.verify ? 'checked' : ''}> Mark claims on the cards as checked or not</label>`;
+    <label class="verify"><input type="checkbox" data-change="verify" ${L.verify ? 'checked' : ''}> Mark claims on the cards as checked or not</label>
+    <label class="verify"><input type="checkbox" data-change="checks-always" ${L.checksAlways ? 'checked' : ''}> Show claims vs checks in every view, even Result</label>`;
 }
 
-function claimSummary(E) {
+function claimSummary(E, L) {
+  if (!claimsVisible(L)) return E.started ? 'Claims hidden in this view' : '';
   const claims = [...E.claims.values()];
   if (!claims.length) return E.started ? 'No claims yet' : '';
   const st = claims.map(c => E.claimStatus(c).state);
@@ -603,12 +630,12 @@ export function dockHTML(ctx, opts = {}) {
     ['log', `Change log${E.changes.length ? ` <i>${E.changes.length}</i>` : ''}`],
     ['layers', 'Layers'],
   ];
-  const body = !open ? '' : tab === 'claims' ? claimsPanel(E) : tab === 'log' ? changesPanel(E) : layersPanel(ctx.layers, opts.layers);
+  const body = !open ? '' : tab === 'claims' ? claimsPanel(E, null, ctx) : tab === 'log' ? changesPanel(E) : layersPanel(ctx.layers, opts.layers);
   return `<div class="dock-bar">
       <div class="tabs" role="tablist">${tabs
         .map(([id, label]) => `<button role="tab" aria-selected="${open && tab === id}" aria-expanded="${open && tab === id}" data-act="tab" data-tab="${id}">${label}</button>`)
         .join('')}</div>
-      <span class="dock-sum">${claimSummary(E)}</span>
+      <span class="dock-sum">${claimSummary(E, ctx.layers.v)}</span>
       ${open ? '<button class="icon-btn" data-act="dock-close" aria-label="Fold the panel" title="Fold the panel"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6.5 8 10.5l4-4"/></svg></button>' : ''}
     </div>${open ? `<div class="tabbody" data-tab="${tab}">${body}</div>` : ''}`;
 }

@@ -7,6 +7,16 @@ export const TASK = {
   brief:
     'Add a pricing page with Free, Pro and Team plans and a switch between monthly and yearly billing. It should match the rest of the app.',
   app: 'Lumen',
+  // What "right" looks like, so people can judge the page themselves.
+  // 'brief' items come from the brief the agent reads; 'added' ones we added for the study.
+  requirements: [
+    { from: 'brief', text: 'Three plans: Free $0, Pro $15 and Team $29 a month.' },
+    { from: 'brief', text: 'A switch between monthly and yearly billing that changes every price.', tryIt: 'Flip the switch in the preview.' },
+    { from: 'brief', text: 'Yearly billing: a year costs the price of ten months. Per month that is $12.50 for Pro (billed $150) and $24.17 for Team (billed $290).', tryIt: 'Switch to Yearly and read the prices.' },
+    { from: 'added', text: 'Prices read like money, to the cent: $12.50, not $12.5.' },
+    { from: 'added', text: 'Works on a phone: at 390 px wide the cards stack and nothing is cut off.', tryIt: 'Choose Phone above the preview.' },
+    { from: 'brief', text: 'It matches the rest of the app.' },
+  ],
 };
 
 export const RECEIPT = { model: 'Frontier model', effort: 'High effort', pricePerK: 0.015 };
@@ -25,7 +35,7 @@ export const INITIAL_PAGE = {
 };
 
 export const SCRIPT = [
-  { id: 's1', type: 'status', text: 'Reading your brief', tokens: 400 },
+  { id: 's1', type: 'status', text: 'Reading your brief', recap: 'Read the brief and checked your components. Your Toggle is on/off only, so it chose to build a new billing switch.', tokens: 400 },
   {
     id: 'k1', type: 'think', kind: 'plan', tokens: 1800,
     text: 'Three plans and a monthly or yearly switch. Plan: see what the app already has, lay out the cards, add the switch, wire up the prices, then test.',
@@ -75,7 +85,7 @@ export const SCRIPT = [
       ],
     },
   },
-  { id: 's2', type: 'status', text: 'Laying out the plan cards', tokens: 200 },
+  { id: 's2', type: 'status', text: 'Laying out the plan cards', recap: 'Built the three plan cards. A copy helper wrote the plan descriptions.', tokens: 200 },
   {
     id: 'n3', type: 'say', tokens: 250,
     text: "I'll hand the plan descriptions to a copy helper while I build the layout.",
@@ -105,7 +115,7 @@ export const SCRIPT = [
     result: 'Page created',
   },
   { id: 'v1', type: 'artifact', label: 'Three plan cards, monthly prices', touches: ['cards'], patch: { cards: true, copy: true }, tokens: 100 },
-  { id: 's3', type: 'status', text: s => (s.toggle === 'new' ? 'Building the billing switch' : 'Adding the billing switch'), tokens: 200 },
+  { id: 's3', type: 'status', text: s => (s.toggle === 'new' ? 'Building the billing switch' : 'Adding the billing switch'), recap: s => `Added the ${TOGGLE_NAME[s.toggle]}, made the prices follow it, and asked you how to show the yearly saving.`, tokens: 200 },
   {
     id: 'a5', type: 'tool', tool: 'Write', if: s => s.toggle === 'new', assumes: 'toggle', from: 'k3', touches: ['toggle'], dur: 1.0, tokens: 2400,
     plain: 'Created a new BillingSwitch component', cmd: 'write src/components/BillingSwitch.tsx  (+31 lines)',
@@ -149,7 +159,7 @@ export const SCRIPT = [
     result: 'Badge added',
   },
   { id: 'v4', type: 'artifact', if: s => s.savings !== 'none', label: 'Savings badge', touches: ['badge'], patch: s => ({ badge: s.savings }), tokens: 100 },
-  { id: 's4', type: 'status', text: 'Running the tests', tokens: 150 },
+  { id: 's4', type: 'status', text: 'Running the tests', recap: 'The tests caught two yearly prices that were not rounded. It rounded them to cents and the tests passed on a re-run. It checked desktop width only.', tokens: 150 },
   {
     id: 'a8', type: 'tool', tool: 'Bash', check: true, ok: false, from: 'k1', touches: ['price'], dur: 2.0, tokens: 1500,
     plain: 'Ran the tests', cmd: 'npm test -- pricing',
@@ -253,7 +263,7 @@ export function mobileSegment() {
       text: "Fair question. I hadn't actually looked at a phone-sized screen.",
       short: 'Checking mobile.',
     },
-    { type: 'status', text: 'Checking a phone-sized screen', tokens: 100 },
+    { type: 'status', text: 'Checking a phone-sized screen', recap: 'At phone width the cards were cut off. It stacked them, and a second phone screenshot passed.', tokens: 100 },
     {
       id: 'm1', type: 'tool', tool: 'Screenshot', check: true, ok: false, touches: ['cards'], dur: 1.2, tokens: 900,
       plain: 'Took a screenshot at phone width', cmd: 'screenshot /pricing --width 390',

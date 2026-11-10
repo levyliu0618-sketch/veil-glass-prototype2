@@ -2,7 +2,7 @@ import { SCRIPT, INITIAL_PAGE, toggleSegment, mobileSegment } from './data.js';
 
 // Seconds of run time after each kind of event before the next one plays.
 const GAP = { status: 0.9, say: 1.7, think: 2.1, tool: 0.6, artifact: 1.0, question: 0.4, subagent: 0.8 };
-const RESOLVED = ['text', 'short', 'more', 'plain', 'cmd', 'out', 'result', 'label', 'patch'];
+const RESOLVED = ['text', 'short', 'more', 'plain', 'cmd', 'out', 'result', 'label', 'patch', 'recap'];
 
 export function fmt(t) {
   const s = Math.max(0, Math.floor(t));

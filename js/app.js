@@ -42,7 +42,13 @@ function renderBar() {
   }
   bar.innerHTML = `
     <div class="brand"><span class="mark" aria-hidden="true"></span>Veil<em>Glass sheet</em></div>
-    <div class="task" title="${esc(TASK.brief)}"><span class="task-k">Task</span><b>${esc(TASK.title)}</b><span class="task-app">for ${TASK.app}, a made-up app</span></div>
+    <div class="task-wrap">
+      <button class="task" data-act="reqs" aria-expanded="${!!ui.reqOpen}" aria-controls="reqs">
+        <span class="task-k">Task</span><b>${esc(TASK.title)}</b><span class="task-app">for ${TASK.app}, a made-up app</span>
+        <span class="task-reqs">Requirements <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 6.5 8 9.5l3-3"/></svg></span>
+      </button>
+      ${ui.reqOpen ? reqsHTML() : ''}
+    </div>
     <div class="playback">
       ${play}
       <button class="bar-btn" data-act="skip" ${E.done || E.waiting || !E.started ? 'disabled' : ''}>Skip ahead</button>
@@ -54,6 +60,17 @@ function renderBar() {
     </div>
     <span class="demo-tag" title="A scripted run. No model is called and nothing you do is recorded or sent.">Simulated run · example data</span>
     <a class="bar-link" href="#why">Why these changes</a>`;
+}
+
+// What the page should do, so people can judge it without reading the agent's log.
+function reqsHTML() {
+  return `<div class="reqs-pop" id="reqs" role="dialog" aria-label="Requirements">
+    <p class="reqs-brief">${esc(TASK.brief)}</p>
+    <ol class="reqs-list">${TASK.requirements
+      .map(r => `<li><span>${esc(r.text)}</span>${r.tryIt ? `<small>${esc(r.tryIt)}</small>` : ''}<em class="src-${r.from}">${r.from === 'brief' ? 'From the brief' : 'Added for the study'}</em></li>`)
+      .join('')}</ol>
+    <p class="reqs-foot">Check these against the page on the right. The agent sees only the brief.</p>
+  </div>`;
 }
 
 function render() {
@@ -123,6 +140,11 @@ document.addEventListener('click', e => {
       ui.steer.delete(id);
       engine.steer(id, choice);
       break;
+    case 'reqs':
+      ui.reqOpen = !ui.reqOpen;
+      if (ui.reqOpen) engine.note('You opened the requirements');
+      renderBar();
+      break;
     case 'answer':
       engine.answer(id, choice);
       break;
@@ -180,8 +202,17 @@ document.addEventListener('click', e => {
   }
 });
 
+// Close the requirements on Escape or a click elsewhere.
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && ui.reqOpen) { ui.reqOpen = false; renderBar(); bar.querySelector('.task')?.focus(); }
+});
+document.addEventListener('pointerdown', e => {
+  if (ui.reqOpen && !e.target.closest('.task-wrap')) { ui.reqOpen = false; renderBar(); }
+});
+
 document.addEventListener('change', e => {
   if (e.target.dataset.change === 'verify') layers.setVerify(e.target.checked);
+  if (e.target.dataset.change === 'checks-always') layers.setChecksAlways(e.target.checked);
 });
 
 let last = performance.now();

@@ -9,11 +9,12 @@ A simulated coding agent adds a pricing page to Lumen, a made-up app. Its raw te
 
 ## What changed in this revision
 
-- **One light, neutral workspace.** The glass is the only translucent surface. It signals "there is more underneath"; the cards on it are solid so they read clearly in every view.
-- **What vs. where.** The six views (Result → Everything) are the main control, shown as separate modes with dots for the layers each lets through: rung 5 swaps actions for thinking rather than adding to rung 4. Glass placement (cover, pin left, fold away) is a small, secondary icon group.
-- **Phases.** The feed is grouped by what the agent is doing. Earlier phases fold to a header, the agent's last line and what's inside; the current phase stays open. Reading older work no longer gets interrupted by new activity ("New activity ↓").
-- **More room for the page.** Run info is one quiet line. Claims vs. checks, change log and layers fold into one bar with a summary and open on click.
-- **Finished ≠ verified.** The header shows "The agent has finished" separately from "2 of 3 claims checked". Questions for you always show, in every view.
+- **Look.** The agent works in a dark well; the veil is smoky frosted glass over it; the result sits in the light. Everything you read on the glass is a thick, near-opaque material. Low saturation; colour only marks state. Type: Outfit for display, Inter for text, JetBrains Mono for code.
+- **What vs. where.** Six views (Result → Everything) are the main control, with dots for the layers each lets through. Glass placement (cover, pin left, fold away) is small and secondary.
+- **Phases.** The feed is grouped by what the agent is doing. A folded phase shows a written summary and what is inside; a phase with a failed check says whether it was fixed and re-checked. Reading older work isn't interrupted by new activity.
+- **Requirements** next to the task: what the page should do, including the yearly price rule, marked "from the brief" or "added for the study".
+- **Rules for reduced views.** Moving the veil never uncovers the raw work (a frost stays, with a logged "Show the raw work"). Claims follow the commentary; check details follow the actions; one Layers switch turns verification on in every view. Questions always show.
+- **Checks and versions.** "Finished" and "N of M claims checked" are separate. Every check says which page version it ran on, and looking back at an old version says the checks ran on a later one.
 - **Lens removed**, following the team's decision to continue with the glass sheet.
 
 ## What you can try

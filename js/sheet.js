@@ -1,5 +1,5 @@
 import {
-  RUNGS, LAYERS, esc, fmt, clarity, visible, syncList, cardHTML, cardSig, mountTerminal, mountPreview, receiptHTML, updateDock, briefHTML,
+  RUNGS, LAYERS, esc, fmt, clarity, visible, claimsVisible, syncList, cardHTML, cardSig, mountTerminal, mountPreview, receiptHTML, updateDock, briefHTML,
 } from './shared.js';
 
 // Where the sheet sits: over the raw work, docked as a column on the left, or folded to a strip.
@@ -72,6 +72,13 @@ export function mountSheet(root, ctx) {
         </div>
       </div>
       <div class="sheet-float"></div>
+      <div class="raw-veil" hidden>
+        <div class="raw-veil-note">
+          <b>The raw work is hidden in this view</b>
+          <span>Moving the veil doesn't uncover it. Showing it is a choice, and it's logged.</span>
+          <button class="chip-btn" data-act="layer" data-key="full" data-val="1">Show the raw work</button>
+        </div>
+      </div>
     </section>
     <aside class="side">
       <div class="preview-host"></div>
@@ -118,6 +125,7 @@ export function mountSheet(root, ctx) {
 
   // "Finished" and "verified" are different things, so they are shown separately.
   function verifyText() {
+    if (!claimsVisible(ctx.layers.v)) return '';
     const claims = [...E.claims.values()];
     if (!claims.length) return E.done ? 'It made no claims to check' : '';
     const states = claims.map(c => E.claimStatus(c).state);
@@ -141,8 +149,8 @@ export function mountSheet(root, ctx) {
     vs.textContent = vt;
     vs.hidden = !vt;
     const claims = [...E.claims.values()];
-    const allOk = claims.length > 0 && claims.every(c => ['checked', 'fixed'].includes(E.claimStatus(c).state));
-    vs.className = `verify-state ${allOk ? 'ok' : claims.length ? 'warn' : ''}`;
+    const allOk = vt && claims.length > 0 && claims.every(c => ['checked', 'fixed'].includes(E.claimStatus(c).state));
+    vs.className = `verify-state ${allOk ? 'ok' : vt && claims.length ? 'warn' : ''}`;
     $('.sheet-head .clock').textContent = fmt(E.clock);
     $('.rail-clock').textContent = fmt(E.clock);
   }
@@ -208,10 +216,17 @@ export function mountSheet(root, ctx) {
       const mustOpen = p.items.some(ev => ev === E.waiting);
       const userSet = ctx.ui.phaseOpen.get(id);
       const open = mustOpen || (userSet !== undefined ? userSet : p === openByDefault);
-      const fail = p.items.some(ev => ev.type === 'tool' && ev.ok === false && !E.isRunning(ev));
-      const says = p.items.filter(ev => ev.type === 'say');
-      const recap = !open && says.length ? says[says.length - 1] : null;
-      const recapText = recap ? (L.verbosity === 2 ? recap.short || recap.text : recap.text) : '';
+      // A phase that had a failed check keeps saying so, and also says if it was fixed.
+      const failedHere = p.items.filter(ev => ev.type === 'tool' && ev.check && ev.ok === false && !E.isRunning(ev));
+      const fixes = E.failedChecks();
+      const unfixed = failedHere.filter(f => !fixes.find(x => x.f === f)?.passedBy).length;
+      const fail = failedHere.length
+        ? unfixed
+          ? { tone: 'bad', text: 'A check failed, not fixed yet' }
+          : { tone: 'fixed', text: 'A check failed · fixed, re-check passed' }
+        : null;
+      // The recap is written for the phase as a whole, and is commentary, so it needs commentary on.
+      const recapText = !open && L.verbosity >= 2 && p.head.recap ? p.head.recap : '';
       const n = p.items.length;
       // A folded phase still says what is inside it in this view, so changing the view shows.
       const count = t => p.items.filter(ev => ev.type === t).length;
@@ -221,13 +236,13 @@ export function mountSheet(root, ctx) {
       const html = `<div class="phase-head${open ? ' is-open' : ''}${p === lastHead && !E.done ? ' is-current' : ''}" data-evt="${id}">
           <button class="phase-btn" data-act="phase" data-id="${id}" aria-expanded="${open}" ${n ? '' : 'disabled'}>
             ${n ? CHEVRON : '<span class="chev-sp"></span>'}<span class="phase-title">${esc(p.head.text)}</span>
-            ${fail ? '<span class="phase-flag">A check failed here</span>' : ''}
+            ${fail ? `<span class="phase-flag ${fail.tone}">${fail.text}</span>` : ''}
             <time>${fmt(p.head.at)}</time>
           </button>
           ${recapText ? `<p class="phase-recap">${esc(recapText)}</p>` : ''}
           ${meta ? `<p class="phase-meta">${meta}</p>` : ''}
         </div>`;
-      out.push({ key: id, sig: [open, recapText, meta, fail, p === lastHead, E.done, n > 0].join('|') + p.head.rev, html });
+      out.push({ key: id, sig: [open, recapText, meta, fail && fail.text, p === lastHead, E.done, n > 0].join('|') + p.head.rev, html });
       if (open) p.items.forEach(ev => out.push({ key: ev.id, sig: cardSig(ev, ctx), html: `<div class="in-phase">${cardHTML(ev, ctx)}</div>` }));
     }
     return out;
@@ -262,8 +277,15 @@ export function mountSheet(root, ctx) {
     // The glass still clears a little as the view lets more through, but the cards on it
     // are solid, so reading never depends on how frosted the glass is.
     const c = clarity(ctx.layers.v);
-    sheet.style.setProperty('--frost', `${(16 - 10 * c).toFixed(1)}px`);
-    sheet.style.setProperty('--tint', (0.62 - 0.3 * c).toFixed(3));
+    sheet.style.setProperty('--frost', `${(17 - 9 * c).toFixed(1)}px`);
+    sheet.style.setProperty('--tint', (0.1 - 0.05 * c).toFixed(3));
+  }
+
+  // Pinning or folding the veil uncovers the terminal. When the raw-work layer is off, a frost
+  // stays over it, so the layout buttons never turn a reduced view into "see everything".
+  function renderRawVeil() {
+    const mode = ctx.ui.sheetMode || 'cover';
+    $('.raw-veil').hidden = !(mode !== 'cover' && ctx.layers.v.full === 0);
   }
 
   function renderDockState() {
@@ -277,6 +299,7 @@ export function mountSheet(root, ctx) {
     renderDial();
     renderFeed();
     renderFrost();
+    renderRawVeil();
     term.render();
     preview.update();
     $('.receipt-host').innerHTML = receiptHTML(E);

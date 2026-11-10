@@ -28,9 +28,15 @@ const QUESTIONS = [
         open: 'Whether the phases match how people think about the task. R1 studied computer-use agents, not coding agents.',
       },
       {
+        change: 'Folded phases show a written summary of the whole phase, not the agent’s last sentence, plus what is inside (for example “3 actions · 1 thought”).',
+        src: ['shn'],
+        says: 'Overview first: a summary should describe the whole group so people can decide whether to open it.',
+        open: 'The summaries are authored for this demo. A live backend would have to generate them, which is its own accuracy risk.',
+      },
+      {
         change: 'Cards on the glass are solid and use one type scale. Labels like SAID / DID are gone or softened; the tool name is shown in code type.',
         src: ['hig'],
-        says: 'Apple’s guidance: thicker, more opaque materials give better contrast for text; thinner, translucent ones remind people of the content behind. Use the more opaque variant when a component holds a lot of text.',
+        says: 'Apple’s guidance: thicker, more opaque materials give better contrast for text; thinner, translucent ones remind people of the content behind. Use the more opaque variant when a component holds a lot of text. That is the split here: thin glass over the well, thick material for anything you read.',
         open: 'A product guideline, not a study of agent interfaces. Our assumption: legibility of the cards matters more than how glassy they look.',
       },
     ],
@@ -75,17 +81,32 @@ const QUESTIONS = [
         says: 'R4 (20-person study): making intermediate steps visible and editable improved perceived transparency and control. Its system also let people edit, so the benefit isn’t from visibility alone.',
         open: 'Whether a one-line summary is noticed enough when a check is missing.',
       },
+      {
+        change: 'A Requirements panel beside the task states what the page should do, including the yearly price rule and the phone-width rule.',
+        src: ['r7'],
+        says: 'R7: people relied on revealed AI reasoning and used less of their own knowledge. Giving them the criteria directly keeps an independent check possible.',
+        open: 'Our inference, not something R7 tested. Two of the six requirements were added for the study; the agent only sees the brief.',
+      },
     ],
   },
 ];
 
 const CHANGES = [
-  ['Layout', 'Light, neutral workspace. The page preview gets most of the right column. Model, effort, tokens and cost are one quiet line (whether they belong in the study is a team decision).'],
-  ['The veil', 'The glass says “there is more underneath”. The cards on it say clearly what the current view lets through. Choosing to see less shows less, not blurrier text.'],
-  ['Controls', 'What the veil shows (six views) is the main control. Where the glass sits (cover, pin, fold) is a small, secondary one.'],
-  ['Process', 'Grouped into phases with a one-line recap. Hover a card and its raw lines still light up under the glass.'],
-  ['Checks', 'Finished and verified are shown separately. Questions for you are never hidden.'],
+  ['Look', 'The agent works in a dark well; the veil is smoky frosted glass over it; the result sits in the light. Glass needs something behind it to read as glass, so the well stays dark. Everything written on the glass is a thick, near-opaque material, so reading never depends on the frost. Low saturation; colour only marks state (passed, failed, not checked, a question for you).'],
+  ['Controls', 'What the veil shows (six views) is the main control. Where the glass sits (cover, pin, fold) is small and secondary.'],
+  ['Process', 'Grouped into phases. A folded phase shows a written summary of the whole phase and what is inside it. A phase with a failed check keeps saying so, and says when it was fixed and re-checked.'],
+  ['Requirements', 'A Requirements panel next to the task lists what “right” looks like, including the yearly rule, so people can judge the page without digging through the agent’s log. Each line says whether it came from the brief or was added for the study.'],
+  ['Checks', 'Finished and verified are shown separately. Every check says which page version it ran on. Looking back at an older version says plainly that the checks ran on a later one.'],
   ['Removed', 'The Lens version, following the team’s decision to continue with the glass sheet.'],
+];
+
+// The rules that keep a reduced view reduced. Our decisions, for the team to confirm.
+const RULES = [
+  ['Moving the veil never uncovers the raw work.', 'Pinning or folding the veil exposes the terminal. If the view hides the raw work, a frost stays over it with a “Show the raw work” button. Using it switches that layer on and is written to the change log, so a study can tell a reveal from a layout change.'],
+  ['Claims follow the commentary.', 'A claim is something the agent says, so in Result and Progress (no commentary) the claims, the “2 of 3 claims checked” line and the Claims vs checks panel are hidden.'],
+  ['Check details follow the actions.', 'In views without actions, a claim shows its status (passed, failed, not checked) but not the check behind it.'],
+  ['One switch for an always-on verification condition.', 'Layers → “Show claims vs checks in every view” overrides the two rules above, in case the team wants verification offered in every condition.'],
+  ['Questions are never hidden.', 'A question the agent asks you shows in every view, and its phase can’t be folded while it waits.'],
 ];
 
 export function mountWhy(root) {
@@ -96,6 +117,11 @@ export function mountWhy(root) {
     <section>
       <h2>What changed</h2>
       <dl class="changes-list">${CHANGES.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
+    </section>
+
+    <section>
+      <h2>Rules for what each view shows</h2>
+      <dl class="changes-list">${RULES.map(([k, v]) => `<div class="rule"><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
     </section>
 
     ${QUESTIONS.map(
