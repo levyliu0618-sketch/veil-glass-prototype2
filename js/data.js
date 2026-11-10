@@ -8,7 +8,7 @@ export const TASK = {
     'Add a pricing page with Free, Pro and Team plans and a switch between monthly and yearly billing. It should match the rest of the app.',
   app: 'Lumen',
   // What "right" looks like, so people can judge the page themselves.
-  // 'brief' items come from the brief the agent reads; 'added' ones we added for the study.
+  // 'brief' items come from the brief the agent reads; 'added' ones are proposed for this demo (not team-agreed).
   requirements: [
     { from: 'brief', text: 'Three plans: Free $0, Pro $15 and Team $29 a month.' },
     { from: 'brief', text: 'A switch between monthly and yearly billing that changes every price.', tryIt: 'Flip the switch in the preview.' },

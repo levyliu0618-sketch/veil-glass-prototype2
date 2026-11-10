@@ -85,17 +85,17 @@ const QUESTIONS = [
         change: 'A Requirements panel beside the task states what the page should do, including the yearly price rule and the phone-width rule.',
         src: ['r7'],
         says: 'R7: people relied on revealed AI reasoning and used less of their own knowledge. Giving them the criteria directly keeps an independent check possible.',
-        open: 'Our inference, not something R7 tested. Two of the six requirements were added for the study; the agent only sees the brief.',
+        open: 'Our inference, not something R7 tested. Two of the six requirements are proposed for this demo and not yet agreed by the team; the agent only sees the brief.',
       },
     ],
   },
 ];
 
 const CHANGES = [
-  ['Look', 'The agent works in a dark well; the veil is smoky frosted glass over it; the result sits in the light. Glass needs something behind it to read as glass, so the well stays dark. Everything written on the glass is a thick, near-opaque material, so reading never depends on the frost. Low saturation; colour only marks state (passed, failed, not checked, a question for you).'],
+  ['Look', 'One soft, low-saturation mist (sand, grey-blue, a trace of pale green) runs behind the whole app. The agent works on a mid-tone smoky band; the veil is a thin sheet of light frosted glass over it; the result sits in the light. Glass needs something with tone behind it to read as glass, but not a black hole. Ordinary process lines are rows with hairlines; only a question for you and a failed check are cards. Colour only marks state.'],
   ['Controls', 'What the veil shows (six views) is the main control. Where the glass sits (cover, pin, fold) is small and secondary.'],
   ['Process', 'Grouped into phases. A folded phase shows a written summary of the whole phase and what is inside it. A phase with a failed check keeps saying so, and says when it was fixed and re-checked.'],
-  ['Requirements', 'A Requirements panel next to the task lists what “right” looks like, including the yearly rule, so people can judge the page without digging through the agent’s log. Each line says whether it came from the brief or was added for the study.'],
+  ['Requirements', 'A Requirements panel next to the task lists what “right” looks like, including the yearly rule, so people can judge the page without digging through the agent’s log. Each line says whether it came from the brief or is proposed for this demo (not yet team-agreed).'],
   ['Checks', 'Finished and verified are shown separately. Every check says which page version it ran on. Looking back at an older version says plainly that the checks ran on a later one.'],
   ['Removed', 'The Lens version, following the team’s decision to continue with the glass sheet.'],
 ];

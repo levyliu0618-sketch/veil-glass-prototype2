@@ -67,7 +67,7 @@ function reqsHTML() {
   return `<div class="reqs-pop" id="reqs" role="dialog" aria-label="Requirements">
     <p class="reqs-brief">${esc(TASK.brief)}</p>
     <ol class="reqs-list">${TASK.requirements
-      .map(r => `<li><span>${esc(r.text)}</span>${r.tryIt ? `<small>${esc(r.tryIt)}</small>` : ''}<em class="src-${r.from}">${r.from === 'brief' ? 'From the brief' : 'Added for the study'}</em></li>`)
+      .map(r => `<li><span>${esc(r.text)}</span>${r.tryIt ? `<small>${esc(r.tryIt)}</small>` : ''}<em class="src-${r.from}">${r.from === 'brief' ? 'From the brief' : 'Proposed for this demo'}</em></li>`)
       .join('')}</ol>
     <p class="reqs-foot">Check these against the page on the right. The agent sees only the brief.</p>
   </div>`;
