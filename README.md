@@ -1,32 +1,46 @@
-# Veil — Glass sheet (Levy's revision)
+# Agent Veil — study task screen (two layout options)
 
-**Live:** https://levyliu0618-sketch.github.io/veil-glass-prototype2/
-**Why these changes:** https://levyliu0618-sketch.github.io/veil-glass-prototype2/#why
+- **Participant screen:** https://levyliu0618-sketch.github.io/veil-glass-prototype2/
+- **Moderator console:** https://levyliu0618-sketch.github.io/veil-glass-prototype2/console.html
 
-A fork of [Saoumya's Veil Glass prototype](https://github.com/saoumyamandy/veil-glass-prototype), for the Agent Veil group (UC Berkeley HCI). The simulated run, the Lumen app and the agent's behaviour are hers and unchanged. This revision changes how the veil is organised and how it reads. It is a proposal for discussion, not a team decision.
+Built from Saoumya's handover *Agent Veil UI Handover: Two Layout Options* (20 Nov 2026, Megadoc → "IA and content"). Information architecture and content follow that document; visual design is Levy's.
 
-A simulated coding agent adds a pricing page to Lumen, a made-up app. Its raw terminal runs under a frosted glass sheet; the page it builds updates on the right.
+The earlier Glass Sheet concept (frosted veil over the terminal, six views) is kept on the branch [`glass-sheet-concept-archive`](https://github.com/levyliu0618-sketch/veil-glass-prototype2/tree/glass-sheet-concept-archive). It started as a fork of [Saoumya's Veil Glass prototype](https://github.com/saoumyamandy/veil-glass-prototype).
 
-## What changed in this revision
+## How to try it
 
-- **Look.** A soft, low-saturation mist behind the whole app. Under the veil, the agent works on a smoky grey-blue ground in white type; the veil is a light frosted pane with a bright edge, the only container. Process lines are rows with hairlines; only questions and failed checks are cards. Compact controls, Inter throughout.
-- **What vs. where.** Six views (Result → Everything) are the main control, with dots for the layers each lets through. Glass placement (cover, pin left, fold away) is small and secondary.
-- **Phases.** The feed is grouped by what the agent is doing. A folded phase shows a written summary and what is inside; a phase with a failed check says whether it was fixed and re-checked. Reading older work isn't interrupted by new activity.
-- **Requirements** next to the task: what the page should do, including the yearly price rule, marked "from the brief" or "proposed for this demo".
-- **Rules for reduced views.** Moving the veil never uncovers the raw work (a frost stays, with a logged "Show the raw work"). Claims follow the commentary; check details follow the actions; one Layers switch turns verification on in every view. Questions always show.
-- **Checks and versions.** "Finished" and "N of M claims checked" are separate. Every check says which page version it ran on, and looking back at an old version says the checks ran on a later one.
-- **Lens removed**, following the team's decision to continue with the glass sheet.
+1. Open the **moderator console**. It has a small mirror of the participant screen, so one window is enough for a team demo.
+2. For a real setup, press **Open participant screen** and put that window on the shared screen. The two windows talk over a `BroadcastChannel` on the same machine (no server), so open both in the same browser.
+3. Press **Start practice task**, then switch **Layout option** (in-stream / pane) and **View** (A–D) while it runs.
 
-## What you can try
+| View | Thinking | Tool calls |
+| --- | --- | --- |
+| A | hidden | hidden |
+| B | shown | hidden |
+| C | hidden | shown |
+| D | shown | shown |
 
-Start the agent, switch views, open a phase, ask **Why?**, say **Not that**, answer the agent's question, open **Claims vs checks**, preview on **Phone** and **Ask it to check** the mobile claim, step through page versions in **Everything**.
+## What it does
 
-## Running it locally
+- **Two layouts, one shell.** Option 1 puts everything in one stream beside the preview; option 2 keeps chat on the left and a work pane (preview on top, thinking and tool calls under it) on the right. Column widths, fonts and preview size never change with the view.
+- **Shared shell:** view label, one-line task brief (full brief on click), 12:00 timer, "I'd accept this", request box, chat, preview.
+- **Four block types:** request, message, thinking, tool call. Each block has a stable `data-block` id, and the participant screen reports which blocks are on screen so time-on-screen can be logged.
+- **Hidden means absent.** The console filters the replay before sending it, so in Views A–C the hidden blocks are not in the participant page, its code or its messages.
+- **Moderator console:** layout switch, View A–D, replay (start, pause, stop, restart, jump, speed), session setup (participant code, think-aloud/silent, timer visible or not), live status (view, time left, accept time, what is on screen, activity), and every panel variant from the handover, switchable on the same replay. Each variant's first option is the handover's "Start with".
+- **Content:** a scripted practice run (spinning cube that changes colour on click), stored as timed events (`js/content/practice-cube.js`). It includes the four hard cases: a long thinking block, 100+ lines of install log, ten tool calls in a row, and a failed build with an error trace. Swap in real recordings in the same format.
 
-Plain HTML, CSS and JavaScript modules; serve it rather than opening `file://`:
+Not built yet (session phase): timestamped notes, session log export, live agent runs, loading the view from a participant's schedule.
 
-```bash
-python3 -m http.server 8000
+## Files
+
+```
+index.html               participant screen (holds no task content)
+console.html             moderator console
+js/participant.js        renders state from the console
+js/console.js            replay clock, view filtering, controls, variants
+js/protocol.js           BroadcastChannel helper
+js/content/              scripted replay + the pages the agent builds
+css/                     participant and console styles
 ```
 
-All data is made up. No model is called and nothing you do is recorded or sent.
+Plain HTML, CSS and JS modules. Serve the folder (`python3 -m http.server 8000`) rather than opening `file://`.

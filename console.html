@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Moderator console · Agent Veil</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&family=JetBrains+Mono:wght@400..600&display=swap" />
+    <link rel="stylesheet" href="css/console.css" />
+  </head>
+  <body>
+    <header class="c-top">
+      <b>Moderator console</b>
+      <span class="muted">Researcher only. Keep this window off the shared screen.</span>
+      <button id="open" class="btn">Open participant screen</button>
+    </header>
+    <main class="c-main">
+      <section class="c-controls">
+        <div class="card">
+          <h2>Layout option</h2>
+          <div id="layout"></div>
+          <p class="hint">Compare the two options; removed once we pick one.</p>
+        </div>
+        <div class="card">
+          <h2>View</h2>
+          <div id="view"></div>
+        </div>
+        <div class="card">
+          <h2>Replay</h2>
+          <p class="hint">Scripted practice run (spinning cube). Stands in for a live agent until recordings exist.</p>
+          <div class="row">
+            <button id="play" class="btn btn-primary">Start practice task</button>
+            <button id="stop" class="btn">Stop run</button>
+            <button id="restart" class="btn">Restart</button>
+            <button id="end" class="btn">Jump to end</button>
+          </div>
+          <div class="row">
+            <input id="scrub" type="range" min="0" step="0.5" value="0" aria-label="Replay position" />
+            <span id="clock" class="mono">0:00</span>
+          </div>
+          <div class="row"><span class="muted">Speed</span><div id="speed"></div></div>
+        </div>
+        <div class="card">
+          <h2>Session setup <span class="muted">(optional now)</span></h2>
+          <label class="row"><span class="muted">Participant code</span><input id="pcode" type="text" placeholder="P01" /></label>
+          <div class="row">
+            <label><input type="radio" name="mode" value="think-aloud" checked /> Think-aloud</label>
+            <label><input type="radio" name="mode" value="silent" /> Silent</label>
+          </div>
+          <label class="row"><input id="timer-show" type="checkbox" checked /> Show the timer to the participant <span class="muted">(open question)</span></label>
+        </div>
+        <div class="card">
+          <h2>Panel variants</h2>
+          <p class="hint">Try each on the same replay. "Start with" is the handover's default.</p>
+          <div id="variants"></div>
+        </div>
+      </section>
+      <section class="c-side">
+        <div class="card">
+          <h2>Live status</h2>
+          <div id="status"></div>
+        </div>
+        <div class="card mirror">
+          <h2>Participant screen <span class="muted">(mirror, for this demo)</span></h2>
+          <div class="mirror-frame"><iframe src="index.html?mirror" title="Mirror of the participant screen" tabindex="-1"></iframe></div>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="js/console.js"></script>
+  </body>
+</html>

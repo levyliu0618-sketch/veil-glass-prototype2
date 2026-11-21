@@ -1,0 +1,119 @@
+/* Participant screen. A chat-and-preview agent app (like v0, Bolt, Lovable), not an IDE.
+   One style for every view: layout, widths, fonts and preview size never change with the view.
+   Variants from the moderator console arrive as data-* attributes on <html>. */
+
+:root {
+  --page: #f3f4f6;
+  --surface: #ffffff;
+  --sub: #f6f7f9;
+  --line: #e4e7eb;
+  --line-2: #d4d9df;
+  --ink: #1b1e22;
+  --ink-2: #4a5059;
+  --ink-3: #757c86;
+  --you: #e9edf2;
+  --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 14px/1.55 var(--font); -webkit-font-smoothing: antialiased; overflow: hidden; }
+button, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+[hidden] { display: none !important; }
+#app { height: 100%; display: flex; flex-direction: column; }
+.waiting { margin: auto; color: var(--ink-3); }
+
+/* ---------- top bar: view label · brief · timer + accept ---------- */
+.top { flex: none; height: 52px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; padding: 0 18px; border-bottom: 1px solid var(--line); background: var(--surface); }
+.view-label { font-size: 12.5px; color: var(--ink-3); }
+.brief { position: relative; }
+.brief-btn { border: 0; background: none; padding: 4px 8px; border-radius: 6px; font-weight: 500; max-width: 46vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.brief-btn:hover, .brief-btn[aria-expanded="true"] { background: var(--sub); }
+.brief-pop { position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%); width: 420px; z-index: 10; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 12px 32px rgba(20, 24, 30, 0.12); font-size: 13.5px; line-height: 1.5; }
+.top-right { justify-self: end; display: flex; align-items: center; gap: 14px; }
+.timer { font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.accept { height: 32px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--ink); background: var(--ink); color: #fff; font-weight: 500; }
+.accept:hover { background: #33373d; }
+.accept.is-pressed { background: var(--surface); color: var(--ink); }
+
+/* ---------- layout: two columns, fixed widths in every view ---------- */
+.layout { flex: 1; min-height: 0; display: grid; gap: 0; }
+.layout[data-layout="stream"] { grid-template-columns: 44% 56%; }
+.layout[data-layout="pane"] { grid-template-columns: 36% 64%; }
+.col { position: relative; min-height: 0; display: flex; flex-direction: column; }
+.col-stream, .col-chat { background: var(--surface); border-right: 1px solid var(--line); }
+.col-preview, .col-work { padding: 14px; gap: 12px; }
+.scroller { flex: 1; min-height: 0; overflow-y: auto; padding: 18px 22px 12px; scrollbar-width: thin; }
+.work-scroller { padding: 4px 2px 12px; }
+
+/* Preview: same size and position in every view. In the pane layout it has a fixed height. */
+.preview { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: #fff; }
+.layout[data-layout="pane"] .preview { flex: none; height: 56%; }
+.preview-bar { flex: none; display: flex; align-items: center; gap: 6px; padding: 7px 12px; border-bottom: 1px solid var(--line); background: var(--sub); font-size: 12px; color: var(--ink-3); }
+.preview-bar i { width: 8px; height: 8px; border-radius: 50%; background: var(--line-2); }
+.preview-bar span { margin-left: 8px; }
+.preview iframe { flex: 1; width: 100%; border: 0; background: #fff; }
+
+/* Request box at the bottom of the chat column */
+.ask { flex: none; display: flex; align-items: flex-end; gap: 8px; margin: 0 16px 16px; padding: 8px 8px 8px 14px; border: 1px solid var(--line-2); border-radius: 12px; background: var(--surface); }
+.ask:focus-within { border-color: var(--ink-3); }
+.ask textarea { flex: 1; border: 0; outline: 0; resize: none; padding: 5px 0; min-height: 22px; max-height: 120px; background: transparent; }
+.ask button { flex: none; width: 30px; height: 30px; display: grid; place-items: center; border: 0; border-radius: 8px; background: var(--ink); color: #fff; }
+.ask svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+.working { padding: 4px 0 8px; font-size: 13px; color: var(--ink-3); }
+.jump { position: absolute; left: 50%; transform: translateX(-50%); bottom: 82px; z-index: 3; border: 1px solid var(--line-2); border-radius: 99px; background: var(--surface); padding: 4px 12px; font-size: 12.5px; box-shadow: 0 4px 14px rgba(20, 24, 30, 0.1); }
+.col-work .jump { bottom: 12px; }
+.empty-brief { color: var(--ink-2); max-width: 46ch; margin: 8px 0; }
+
+/* ---------- the four block types ---------- */
+.stream { display: flex; flex-direction: column; gap: 14px; }
+.block { position: relative; }
+.bt { display: none; font-size: 11px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+[data-time="block"] .bt { display: block; margin-top: 2px; }
+
+/* Request: the participant's own message */
+.b-request { align-self: flex-end; max-width: 85%; }
+.b-request .bubble { padding: 8px 13px; border-radius: 14px 14px 4px 14px; background: var(--you); white-space: pre-wrap; }
+.b-request .bt { text-align: right; }
+
+/* Message: the agent's narration, plain prose */
+.prose { white-space: pre-wrap; }
+.b-message .prose { font-size: 14.5px; line-height: 1.6; }
+
+/* Thinking: set apart, not more or less important */
+.b-label { font-size: 12px; font-weight: 500; color: var(--ink-3); margin-bottom: 2px; }
+[data-labels="none"] .b-label { display: none; }
+.b-thinking .prose { color: var(--ink-2); font-size: 13.5px; line-height: 1.6; }
+[data-thinking="rule"] .b-thinking { padding-left: 12px; border-left: 2px solid var(--line-2); }
+[data-thinking="indent"] .b-thinking { padding-left: 22px; }
+[data-thinking="indent"] .b-thinking .prose { font-style: italic; }
+[data-thinking="quote"] .b-thinking { padding: 10px 12px; border-radius: 10px; background: var(--sub); }
+
+/* Tool call: call line, then output, as produced */
+.call { font: 500 12.5px/1.5 var(--mono); color: var(--ink); white-space: pre-wrap; word-break: break-word; }
+.out { margin: 4px 0 0; font: 12px/1.6 var(--mono); color: var(--ink-2); white-space: pre-wrap; word-break: break-word; }
+[data-tool="split"] .out { padding: 8px 10px; border-radius: 8px; background: var(--sub); }
+[data-tool="box"] .b-tool { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--sub); }
+[data-tool="box"] .out { padding-top: 4px; border-top: 1px dashed var(--line-2); }
+[data-long="box"] .out, [data-long="box"] .b-thinking .prose { max-height: 220px; overflow: auto; }
+.ln-add { background: #e8f3ec; }
+.ln-del { background: #f8e9e7; }
+.ln-err { color: #9e3328; }
+
+/* Consecutive tool calls grouped into one block */
+.group { display: flex; flex-direction: column; gap: 10px; }
+.group-tools { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; }
+.group-tools .out { background: var(--sub); }
+.group-turn { padding-left: 14px; border-left: 1px solid var(--line); gap: 14px; }
+
+/* Pane layout: chat-to-work link variants */
+.turn-divider { border: 0; border-top: 1px solid var(--line); margin: 2px 0; }
+.col-work .is-linked { box-shadow: -10px 0 0 -8px var(--ink-3); }
+
+.narrow-note { display: none; }
+@media (max-width: 999px) {
+  .narrow-note { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: var(--page); color: var(--ink-2); padding: 24px; text-align: center; }
+}
