@@ -25,7 +25,7 @@ The earlier Glass Sheet concept (frosted veil over the terminal, six views) is k
 
 **Time on screen** per block is reported by the participant screen (only while its tab is visible) and summed in the console. It is screen time, not reading time, and still needs validating before it is used as data.
 
-Earlier versions of this study UI: branches [`study-ui-v2-archive`](https://github.com/levyliu0618-sketch/veil-glass-prototype2/tree/study-ui-v2-archive) and [`study-ui-v1-archive`](https://github.com/levyliu0618-sketch/veil-glass-prototype2/tree/study-ui-v1-archive).
+Without the visual layer: [/structure/](https://levyliu0618-sketch.github.io/veil-glass-prototype2/structure/console.html) (branch `structure-only`). First visual pass: branch `visual-v1-archive`. Earlier versions of this study UI: branches [`study-ui-v2-archive`](https://github.com/levyliu0618-sketch/veil-glass-prototype2/tree/study-ui-v2-archive) and [`study-ui-v1-archive`](https://github.com/levyliu0618-sketch/veil-glass-prototype2/tree/study-ui-v1-archive).
 
 | View | Thinking | Tool calls |
 | --- | --- | --- |
@@ -41,7 +41,7 @@ Earlier versions of this study UI: branches [`study-ui-v2-archive`](https://gith
 - **Four block types:** request, message, thinking, tool call. Each block has a stable `data-block` id, and the participant screen reports which blocks are on screen so time-on-screen can be logged.
 - **Hidden means absent.** The console filters the replay before sending it, so in Views A–C the hidden blocks are not in the participant page, its code or its messages.
 - **Moderator console:** layout switch, View A–D, replay (start, pause, stop, restart, jump, speed), session setup (participant code, think-aloud/silent, timer visible or not), live status (view, time left, accept time, what is on screen, activity), and every panel variant from the handover (including syntax highlighting), switchable on the same replay. Each variant's first option is the handover's "Start with".
-- **Content:** a scripted practice run (spinning cube that changes colour on click), stored as timed events (`js/content/practice-cube.js`). It includes the four hard cases: a long thinking block, 100+ lines of install log, ten tool calls in a row, and a failed build with an error trace. Swap in real recordings in the same format.
+- **Content:** a scripted practice run (a rounded cube rendered with a small WebGL shader: matte plaster white with a soft floor shadow, spins, and cycles charcoal → terracotta → blush pink → sage green on click; the code shown in the replay is the code that runs in the preview), stored as timed events (`js/content/practice-cube.js`). It includes the four hard cases: a long thinking block, 100+ lines of install log, ten tool calls in a row, and a failed build with an error trace. Swap in real recordings in the same format.
 
 Not built yet (session phase): timestamped notes, session log export, live agent runs, loading the view from a participant's schedule.
 

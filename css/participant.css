@@ -135,88 +135,96 @@ button { cursor: pointer; }
 .ask textarea:disabled { cursor: default; }
 
 /* =====================================================================
-   Visual layer (Levy). Structure above is unchanged; branch `structure-only`
-   has the page without this layer.
-   References: light grey ground, soft white surfaces, dark text, a dark
-   selected state (calendar ref), and a light raised / pressed material on
-   controls only (neumorphic ref, but shallower). Text areas stay flat.
-   Same in both layouts and all four views. No blur, no fading of old content.
+   Visual layer (Levy), round 2. Structure above is unchanged; branch
+   `structure-only` (and /structure/ on the site) has the page without it.
+   Reference: soft neumorphic modules on one neutral ground. Big modules are
+   gently raised (light from the upper left, soft shadow to the lower right),
+   the request box is pressed in, keys press down. Text, thinking and logs stay
+   flat. Same in both layouts and all four views. Nothing blurred or faded.
    ===================================================================== */
 :root {
-  --page: #e7e8ea;
-  --surface: #f8f8f9;
-  --sub: #eeeff1;
-  --line: #dcdee2;
-  --line-2: #c9ccd1;
-  --ink: #17181a;
-  --ink-2: #3d4148;
-  --ink-3: #686d75;
-  --you: #e3e5e8;
-  --dark: #1d1e21;
-  /* material: a faint top highlight and a soft drop, never deep */
-  --raise: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(20, 22, 26, 0.08), 0 3px 8px rgba(20, 22, 26, 0.06);
-  --press: inset 0 1px 3px rgba(20, 22, 26, 0.14), inset 0 0 0 1px rgba(20, 22, 26, 0.04);
-  --panel: 0 1px 2px rgba(20, 22, 26, 0.05), 0 8px 24px rgba(20, 22, 26, 0.05);
+  --page: #e3e2df;
+  --surface: #e8e7e4;
+  --sub: rgba(40, 36, 30, 0.045);
+  --line: rgba(40, 36, 30, 0.1);
+  --line-2: rgba(40, 36, 30, 0.18);
+  --ink: #1c1c1e;
+  --ink-2: #3a3a3e;
+  --ink-3: #66666b;
+  --you: rgba(40, 36, 30, 0.07);
+  --dark: #1f1f22;
+  --hi: rgba(255, 255, 255, 0.78);
+  --lo: rgba(150, 144, 134, 0.42);
+  --raise: -6px -6px 14px var(--hi), 7px 8px 18px var(--lo), inset 1px 1px 0 rgba(255, 255, 255, 0.55);
+  --raise-sm: -3px -3px 7px var(--hi), 3px 4px 9px var(--lo), inset 1px 1px 0 rgba(255, 255, 255, 0.6);
+  --press: inset 3px 3px 7px rgba(150, 144, 134, 0.4), inset -3px -3px 7px rgba(255, 255, 255, 0.7);
+  --key: inset 1px 1px 0 rgba(255, 255, 255, 0.16), 3px 4px 10px rgba(60, 56, 50, 0.35), -2px -2px 6px rgba(255, 255, 255, 0.6);
+  --key-press: inset 2px 2px 5px rgba(0, 0, 0, 0.5);
 }
 body { background: var(--page); }
+#app { padding: 14px 16px 16px; gap: 14px; }
 
-/* Top bar sits on the grey ground */
-.top { background: transparent; border-bottom: 0; height: 56px; }
+/* Top bar: one raised strip, like a nav module */
+.top { height: 58px; padding: 0 10px 0 20px; border: 0; border-radius: 20px; background: var(--surface); box-shadow: var(--raise); }
 .view-label { font-weight: 500; color: var(--ink-3); }
-.brief-btn { color: var(--ink); font-weight: 600; letter-spacing: -0.005em; border-radius: 8px; }
-.brief-btn:hover, .brief-btn[aria-expanded="true"] { background: var(--surface); box-shadow: var(--raise); }
-.brief-pop { background: var(--surface); border-color: var(--line); border-radius: 12px; box-shadow: 0 16px 40px rgba(20, 22, 26, 0.14); color: var(--ink); }
+.brief-btn { color: var(--ink); font-weight: 600; border-radius: 10px; padding: 6px 12px; }
+.brief-btn:hover, .brief-btn[aria-expanded="true"] { background: var(--surface); box-shadow: var(--press); }
+.brief-pop { background: var(--surface); border: 0; border-radius: 16px; box-shadow: var(--raise); color: var(--ink); padding: 14px 16px; }
 .timer { color: var(--ink-2); font-weight: 500; }
+.accept { height: 38px; padding: 0 18px; border: 0; border-radius: 13px; background: var(--dark); color: #fff; box-shadow: var(--key); transition: box-shadow .12s, transform .12s; }
+.accept:hover { background: #2b2b2f; }
+.accept:active { box-shadow: var(--key-press); transform: translateY(1px); }
+.accept:disabled { opacity: 1; background: #c9c7c2; color: #f3f2ef; box-shadow: var(--raise-sm); }
+.accept.is-pressed, .accept.is-pressed:disabled { background: var(--surface); color: var(--ink-2); box-shadow: var(--press); }
 
-/* Accept: the one dark control, like the selected range in the calendar ref */
-.accept { height: 34px; padding: 0 16px; border-radius: 10px; border: 0; background: var(--dark); color: #fff;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 1px 2px rgba(0, 0, 0, 0.2), 0 4px 10px rgba(0, 0, 0, 0.12); }
-.accept:hover { background: #2b2d31; }
-.accept:active { box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.45); }
-.accept.is-pressed { background: var(--sub); color: var(--ink); box-shadow: var(--press); }
-.accept:disabled { opacity: 1; background: #c7cacf; color: #f4f5f6; box-shadow: none; }
-.accept.is-pressed:disabled { background: var(--sub); color: var(--ink-2); box-shadow: var(--press); }
-
-/* Panels: light surfaces on the grey ground, same 40/60 split */
-.layout { padding: 0 14px 14px; gap: 14px; }
+/* Modules: same 40/60 split, raised from the ground */
+.layout { padding: 0; gap: 16px; }
 .layout[data-layout="stream"], .layout[data-layout="pane"] { grid-template-columns: 2fr 3fr; }
-.col-stream, .col-chat { background: var(--surface); border: 1px solid rgba(255, 255, 255, 0.7); border-radius: 16px; box-shadow: var(--panel); overflow: hidden; }
-.col-preview, .col-work { padding: 0; gap: 14px; }
-.preview { border: 1px solid rgba(255, 255, 255, 0.7); border-radius: 16px; background: #fff; box-shadow: var(--panel); }
-.preview-bar { background: var(--surface); border-bottom-color: var(--line); padding: 9px 14px; }
-.preview-bar i { background: var(--line-2); }
-.work-scroller { flex: 1; background: var(--surface); border: 1px solid rgba(255, 255, 255, 0.7); border-radius: 16px; box-shadow: var(--panel); padding: 16px 20px 12px; }
-.scroller { padding: 20px 22px 12px; }
+.col-stream, .col-chat { background: var(--surface); border: 0; border-radius: 22px; box-shadow: var(--raise); overflow: hidden; }
+.col-preview, .col-work { padding: 0; gap: 16px; }
+.scroller { padding: 22px 24px 12px; }
 
-/* Request box: a shallow pressed-in well; send is a small raised dark key */
-.ask { margin: 0 14px 14px; border: 0; border-radius: 14px; background: var(--sub); box-shadow: var(--press); }
-.ask:focus-within { box-shadow: var(--press), 0 0 0 2px rgba(23, 24, 26, 0.18); }
-.ask textarea { color: var(--ink); }
+/* Preview: a raised frame holding a recessed stage */
+.preview { border: 0; border-radius: 22px; background: var(--surface); box-shadow: var(--raise); padding: 0 10px 10px; }
+.preview-bar { background: transparent; border: 0; padding: 11px 6px 9px; }
+.preview-bar i { background: rgba(40, 36, 30, 0.16); }
+.preview-bar span { color: var(--ink-3); }
+.preview iframe { border-radius: 14px; background: #ebe9e5; box-shadow: inset 2px 2px 6px rgba(150, 144, 134, 0.35), inset -2px -2px 6px rgba(255, 255, 255, 0.6); }
+
+/* Work log module (pane layout). With nothing in it (View A) it keeps its space but has no box. */
+.work-scroller { flex: 1; background: var(--surface); border-radius: 22px; box-shadow: var(--raise); padding: 18px 22px 12px; }
+.work-scroller:not(:has(.block)) { background: transparent; box-shadow: none; }
+
+/* Request box pressed in; send is a small dark key */
+.ask { margin: 0 14px 14px; border: 0; border-radius: 16px; background: var(--surface); box-shadow: var(--press); padding: 9px 9px 9px 16px; }
+.ask:focus-within { box-shadow: var(--press), 0 0 0 2px rgba(31, 31, 34, 0.2); }
 .ask textarea::placeholder { color: var(--ink-3); }
-.ask button { width: 32px; height: 32px; border-radius: 9px; background: var(--dark);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 1px 2px rgba(0, 0, 0, 0.2); }
-.ask button:active { box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.45); }
-.ask button:disabled { background: #c7cacf; box-shadow: none; }
+.ask button { width: 34px; height: 34px; border-radius: 11px; background: var(--dark); box-shadow: var(--key); }
+.ask button:active { box-shadow: var(--key-press); }
+.ask button:disabled { background: #c9c7c2; box-shadow: none; }
 
-/* Jump to latest: a light raised key */
-.jump { border: 0; background: var(--surface); color: var(--ink); font-weight: 500; box-shadow: var(--raise), 0 6px 16px rgba(20, 22, 26, 0.1); }
+.jump { border: 0; background: var(--surface); color: var(--ink); font-weight: 500; box-shadow: var(--raise-sm); padding: 6px 14px; }
 .jump:active { box-shadow: var(--press); }
 
-/* Blocks stay flat and fully legible */
-.b-request .bubble { background: var(--you); color: var(--ink); }
+/* Content: flat, ordered by weight and spacing, one tint for output */
+.stream { gap: 18px; }
+.b-request .bubble { background: var(--you); color: var(--ink); border-radius: 16px 16px 5px 16px; padding: 9px 14px; }
 .b-message .prose { color: var(--ink); }
+.b-label { color: var(--ink-3); font-weight: 600; font-size: 11.5px; letter-spacing: 0.02em; }
 .b-thinking .prose { color: var(--ink-2); }
-.b-label { color: var(--ink-3); letter-spacing: 0.01em; }
-.call { color: var(--ink); }
+[data-thinking="rule"] .b-thinking { border-left-color: var(--line-2); }
+.call { color: var(--ink); font-weight: 600; }
 .out { color: var(--ink-2); }
-[data-tool="split"] .out, .group-tools .out { background: var(--sub); }
-[data-tool="box"] .b-tool, .group-tools { background: transparent; border-color: var(--line); }
-[data-tool="box"] .b-tool { background: var(--sub); }
-[data-thinking="quote"] .b-thinking { background: var(--sub); }
+[data-tool="split"] .out, .group-tools .out { background: var(--sub); border-radius: 10px; padding: 9px 12px; margin-top: 6px; }
+.group-tools { border: 0; padding: 0; gap: 14px; }
+[data-tool="box"] .b-tool { border: 0; border-radius: 12px; background: var(--sub); }
+[data-tool="box"] .out { border-top-color: var(--line); }
+[data-thinking="quote"] .b-thinking { background: var(--sub); border-radius: 12px; }
+.group-turn { border-left-color: var(--line-2); }
+.turn-divider { border-top-color: var(--line); }
 .working { color: var(--ink-3); font-weight: 500; }
 
-/* Status line: in the flow, on the grey ground, no extra colour except for a problem */
-.offline { margin: 0 14px 10px; border: 0; border-radius: 10px; padding: 7px 14px; background: #f3ecdc; color: #4e3c14; box-shadow: inset 0 0 0 1px #e3d6b6; font-weight: 500; }
-.offline[data-phase="ended"] { background: var(--surface); color: var(--ink); box-shadow: var(--raise); }
-/* Accepted: clearly pressed in, not a fresh light key */
-.accept.is-pressed, .accept.is-pressed:disabled { background: #dfe1e5; color: var(--ink-2); box-shadow: inset 0 2px 4px rgba(20, 22, 26, 0.18); }
+/* Status line: a slim raised strip; colour only when something is wrong */
+.offline { margin: 0; border: 0; border-radius: 14px; padding: 9px 18px; background: #efe5cf; color: #4b3a12; font-weight: 500; box-shadow: -3px -3px 7px var(--hi), 3px 4px 9px rgba(150, 130, 90, 0.35); }
+.offline[data-phase="ended"] { background: var(--surface); color: var(--ink); box-shadow: var(--raise-sm); }
+.ask textarea:disabled { cursor: default; background: transparent; }
