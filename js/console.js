@@ -45,6 +45,8 @@ const st = {
   typed: [],             // requests the participant typed
   accepted: null,        // time the participant pressed "I'd accept this"
   showTimer: true,
+  autoStart: true,       // the participant's first request starts the replay
+  ownFirst: false,       // their words replaced the scripted first request
   code: '',
   mode: 'think-aloud',
   log: [],               // researcher-side activity
@@ -54,7 +56,19 @@ const st = {
 
 const send = open(msg => {
   if (msg.kind === 'hello') { if (!msg.mirror) { st.connected = true; note('Participant screen connected'); } broadcast(true); renderStatus(); }
-  if (msg.kind === 'request') { st.typed.push({ id: `u${st.typed.length + 1}`, t: st.time, type: 'request', text: msg.text }); note(`Participant sent: "${msg.text}"`); broadcast(true); renderStatus(); }
+  if (msg.kind === 'request') {
+    // The participant's first request starts the replay, standing in for the agent picking it up.
+    // Their own words replace the scripted request.
+    if (!st.started && st.autoStart) {
+      st.started = true; st.playing = true; st.time = 0; st.ownFirst = true;
+      st.typed.push({ id: 'r1', t: 0, type: 'request', text: msg.text });
+      note(`Participant sent: "${msg.text}" (replay started)`);
+    } else {
+      st.typed.push({ id: `u${st.typed.length + 1}`, t: st.time, type: 'request', text: msg.text });
+      note(`Participant sent: "${msg.text}"`);
+    }
+    broadcast(true); renderStatus();
+  }
   if (msg.kind === 'accept' && st.accepted == null) { st.accepted = st.time; note("Participant pressed I'd accept this"); broadcast(true); renderStatus(); }
   if (msg.kind === 'seen') for (const c of msg.changes) trackSeen(c);
   if (msg.kind === 'scroll' && !msg.atBottom) note(`Participant scrolled up in ${msg.stream}`, true);
@@ -89,11 +103,13 @@ function partial(e, t) {
 function visibleBlocks() {
   const v = VIEWS[st.view];
   const t = st.time;
-  const all = [...EVENTS.filter(e => e.type !== 'preview'), ...st.typed].sort((a, b) => a.t - b.t);
+  const scripted = EVENTS.filter(e => e.type !== 'preview' && !(st.ownFirst && e.id === 'r1'));
+  const all = [...scripted, ...st.typed].sort((a, b) => a.t - b.t);
   const out = [];
   let turn = 0;
   for (const e of all) {
-    if (!st.started || e.t > t) continue;
+    // The participant's own requests always show; the scripted run shows once it has started.
+    if (e.t > t || (!st.started && !st.typed.includes(e))) continue;
     // Hidden layers are dropped here, so they never reach the participant window.
     if (e.type === 'thinking' && !v.thinking) continue;
     if (e.type === 'tool' && !v.tools) continue;
@@ -207,7 +223,7 @@ document.addEventListener('click', e => {
     broadcast(true);
   }
   if (b.id === 'restart') {
-    Object.assign(st, { time: 0, playing: false, started: false, typed: [], accepted: null });
+    Object.assign(st, { time: 0, playing: false, started: false, typed: [], accepted: null, ownFirst: false });
     st.onScreen.clear();
     note('Restarted');
     broadcast(true); renderStatus();
@@ -221,6 +237,7 @@ document.addEventListener('change', e => {
   const t = e.target;
   if (t.dataset.variant) { st.variants[t.dataset.variant] = t.value; note(`${t.dataset.variant}: ${t.value}`); broadcast(true); }
   if (t.id === 'timer-show') { st.showTimer = t.checked; broadcast(true); renderStatus(); }
+  if (t.id === 'autostart') st.autoStart = t.checked;
   if (t.id === 'pcode') st.code = t.value;
   if (t.name === 'mode') st.mode = t.value;
 });

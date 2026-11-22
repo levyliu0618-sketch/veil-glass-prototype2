@@ -28,7 +28,7 @@
         </div>
         <div class="card">
           <h2>Replay</h2>
-          <p class="hint">Scripted practice run (spinning cube). Stands in for a live agent until recordings exist.</p>
+          <p class="hint">Scripted practice run (spinning cube). There is no live agent: the replay stands in for one until recordings exist. Start it here, or let the participant start it by sending a request.</p>
           <div class="row">
             <button id="play" class="btn btn-primary">Start practice task</button>
             <button id="stop" class="btn">Stop run</button>
@@ -40,6 +40,7 @@
             <span id="clock" class="mono">0:00</span>
           </div>
           <div class="row"><span class="muted">Speed</span><div id="speed"></div></div>
+          <label class="row"><input id="autostart" type="checkbox" checked /> Start the replay when the participant sends their first request</label>
         </div>
         <div class="card">
           <h2>Session setup <span class="muted">(optional now)</span></h2>

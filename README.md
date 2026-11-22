@@ -11,7 +11,7 @@ The earlier Glass Sheet concept (frosted veil over the terminal, six views) is k
 
 1. Open the **moderator console**. It has a small mirror of the participant screen, so one window is enough for a team demo.
 2. For a real setup, press **Open participant screen** and put that window on the shared screen. The two windows talk over a `BroadcastChannel` on the same machine (no server), so open both in the same browser.
-3. Press **Start practice task**, then switch **Layout option** (in-stream / pane) and **View** (A–D) while it runs.
+3. There is no live agent behind this demo: a scripted replay in the console stands in for one. Start it with **Start practice task**, or just send a request from the participant screen — the first request starts the replay. Then switch **Layout option** (in-stream / pane) and **View** (A–D) while it runs.
 
 | View | Thinking | Tool calls |
 | --- | --- | --- |
