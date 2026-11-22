@@ -39,3 +39,8 @@ button { cursor: pointer; }
 .log time { font-family: var(--mono); color: var(--ink-3); }
 .mirror-frame { position: relative; width: 100%; aspect-ratio: 1440 / 900; overflow: hidden; border: 1px solid var(--line); border-radius: 8px; }
 .mirror-frame iframe { position: absolute; top: 0; left: 0; width: 1440px; height: 900px; border: 0; transform-origin: 0 0; pointer-events: none; }
+.btn:disabled { color: var(--ink-3); background: #f5f6f8; cursor: default; }
+.btn-primary:disabled { background: #c9ced5; border-color: #c9ced5; color: #fff; }
+.notice { border-color: #e2cf9f; background: #fffcf5; }
+.practice q { flex: 1; font-style: italic; color: var(--ink); }
+.seen time { font-variant-numeric: tabular-nums; }

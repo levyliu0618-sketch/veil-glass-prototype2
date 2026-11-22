@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&family=JetBrains+Mono:wght@400..600&display=swap" />
-    <link rel="stylesheet" href="css/console.css?v=20261122b" />
+    <link rel="stylesheet" href="css/console.css?v=20261122c" />
   </head>
   <body>
     <header class="c-top">
@@ -26,21 +26,32 @@
           <h2>View</h2>
           <div id="view"></div>
         </div>
+        <div class="card notice">
+          <h2>This is a fixed practice replay, not a live agent</h2>
+          <p class="hint">Whatever the first request says, the same scripted cube run plays. Later messages appear in the chat and are logged, but get no reply. Ask participants to send the practice request below. Both windows must be open in the same browser on this computer.</p>
+          <div class="row practice"><q id="practice"></q><button id="copy-practice" class="btn">Copy</button></div>
+        </div>
         <div class="card">
-          <h2>Replay</h2>
-          <p class="hint">Scripted practice run (spinning cube). There is no live agent: the replay stands in for one until recordings exist. Start it here, or let the participant start it by sending a request.</p>
+          <h2>Task <span class="muted">(real time: drives the timer and every logged time)</span></h2>
           <div class="row">
-            <button id="play" class="btn btn-primary">Start practice task</button>
-            <button id="stop" class="btn">Stop run</button>
-            <button id="restart" class="btn">Restart</button>
+            <button id="start" class="btn btn-primary">Start practice task</button>
+            <button id="stop" class="btn">Stop task</button>
+            <button id="reset" class="btn">Reset</button>
+            <span class="muted">Elapsed</span><span id="task-clock" class="mono">0:00</span>
+          </div>
+          <label class="row"><input id="autostart" type="checkbox" checked /> Also start when the participant sends their first request</label>
+        </div>
+        <div class="card">
+          <h2>Replay <span class="muted">(position in the scripted run only)</span></h2>
+          <div class="row">
+            <button id="play" class="btn">Pause replay</button>
             <button id="end" class="btn">Jump to end</button>
+            <span class="muted">Speed</span><div id="speed"></div>
           </div>
           <div class="row">
             <input id="scrub" type="range" min="0" step="0.5" value="0" aria-label="Replay position" />
             <span id="clock" class="mono">0:00</span>
           </div>
-          <div class="row"><span class="muted">Speed</span><div id="speed"></div></div>
-          <label class="row"><input id="autostart" type="checkbox" checked /> Start the replay when the participant sends their first request</label>
         </div>
         <div class="card">
           <h2>Session setup <span class="muted">(optional now)</span></h2>
@@ -64,10 +75,10 @@
         </div>
         <div class="card mirror">
           <h2>Participant screen <span class="muted">(mirror, for this demo)</span></h2>
-          <div class="mirror-frame"><iframe src="index.html?mirror&v=20261122b" title="Mirror of the participant screen" tabindex="-1"></iframe></div>
+          <div class="mirror-frame"><iframe src="index.html?mirror&v=20261122c" title="Mirror of the participant screen" tabindex="-1"></iframe></div>
         </div>
       </section>
     </main>
-    <script type="module" src="js/console.js?v=20261122b"></script>
+    <script type="module" src="js/console.js?v=20261122c"></script>
   </body>
 </html>

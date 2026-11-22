@@ -1,9 +1,13 @@
 // Moderator console. Researcher-only window. Holds the replay content and every control,
 // and sends the participant screen only what the current view allows.
+//
+// Two clocks, kept apart on purpose:
+//   task clock   real time since the task started; drives the timer and every logged time
+//   replay clock position in the scripted run; pause, speed and scrubbing change only this
 
-import { open, fmtClock } from './protocol.js?v=20261122b';
-import { TASK, EVENTS, END } from './content/practice-cube.js?v=20261122b';
-import { PAGES } from './content/cube-pages.js?v=20261122b';
+import { open, fmtClock } from './protocol.js?v=20261122c';
+import { TASK, EVENTS, END } from './content/practice-cube.js?v=20261122c';
+import { PAGES } from './content/cube-pages.js?v=20261122c';
 
 // ---------- state ----------
 
@@ -28,65 +32,105 @@ const VARIANTS = [
     { key: 'labels', label: 'Block labels', opts: [['short', '"Thinking" label; tool name as emitted'], ['none', 'Style only, no labels']] },
     { key: 'thinking', label: 'Thinking style', opts: [['rule', 'Muted with a left rule'], ['indent', 'Muted and indented'], ['quote', 'Quote-style card']] },
     { key: 'tool', label: 'Tool call anatomy', opts: [['split', 'Call line, then output below'], ['box', 'Call and output in one box']] },
-    { key: 'code', label: 'Code and diffs', opts: [['plain', 'Plain monospace, + and − kept as text'], ['tint', '+ / − lines tinted']] },
+    { key: 'code', label: 'Code and diffs', opts: [['plain', 'Plain monospace, + and − kept as text'], ['syntax', 'Syntax highlighting'], ['tint', '+ / − lines tinted']] },
     { key: 'errors', label: 'Errors', opts: [['plain', 'As produced, no tint'], ['tint', 'Error text tinted']] },
     { key: 'time', label: 'Timestamps', opts: [['none', 'None'], ['block', 'Time per block']] },
   ] },
 ];
 
+const PRACTICE_REQUEST = 'Build a spinning 3D cube that changes colour when I click it.';
+
 const st = {
   layout: 'stream',
   view: 'D',
   variants: Object.fromEntries(VARIANTS.flatMap(g => g.items.map(i => [i.key, i.opts[0][0]]))),
-  time: 0,
-  playing: false,
-  speed: 1,
-  started: false,
+  // replay clock
+  time: 0, playing: false, speed: 1, started: false,
+  // task clock (performance.now() values)
+  taskStart: null, taskStop: null, timeUp: false,
   typed: [],             // requests the participant typed
-  accepted: null,        // time the participant pressed "I'd accept this"
+  accepted: null,        // { task, replay } when "I'd accept this" was pressed
   showTimer: true,
-  autoStart: true,       // the participant's first request starts the replay
+  autoStart: true,       // the participant's first request starts the task and the replay
   ownFirst: false,       // their words replaced the scripted first request
-  code: '',
-  mode: 'think-aloud',
-  log: [],               // researcher-side activity
-  connected: false,
-  onScreen: new Map(),   // block id -> { since, total }
+  code: '', mode: 'think-aloud',
+  log: [],               // researcher-side activity, stamped with task time
+  lastPing: 0,           // last heartbeat from the real participant screen
+  onScreen: new Map(),   // block id -> { since, total } in ms of task time on screen
 };
 
+const taskTime = () => (st.taskStart == null ? 0 : ((st.taskStop ?? performance.now()) - st.taskStart) / 1000);
+const connected = () => performance.now() - st.lastPing < 4000;
+
+function startTask(how) {
+  if (st.taskStart != null) return;
+  st.taskStart = performance.now();
+  st.taskStop = null;
+  st.started = true;
+  st.playing = true;
+  note(`Task started (${how})`);
+}
+function stopTask(why) {
+  if (st.taskStart == null || st.taskStop != null) return;
+  st.taskStop = performance.now();
+  st.playing = false;
+  closeAllSeen();
+  note(why);
+}
+
 const send = open(msg => {
-  if (msg.kind === 'hello') { if (!msg.mirror) { st.connected = true; note('Participant screen connected'); } broadcast(true); renderStatus(); }
+  if (msg.kind === 'hello' || msg.kind === 'ping') {
+    if (!msg.mirror) {
+      const was = connected();
+      st.lastPing = performance.now();
+      if (!was) note('Participant screen connected');
+    }
+    if (msg.kind === 'hello') broadcast(true);
+  }
   if (msg.kind === 'request') {
-    // The participant's first request starts the replay, standing in for the agent picking it up.
-    // Their own words replace the scripted request.
+    send({ kind: 'ack', rid: msg.rid });
     if (!st.started && st.autoStart) {
-      st.started = true; st.playing = true; st.time = 0; st.ownFirst = true;
+      // A fixed practice replay: any first request starts the same cube run. Their own words
+      // replace the scripted request; nothing pretends to answer them.
+      st.ownFirst = true;
       st.typed.push({ id: 'r1', t: 0, type: 'request', text: msg.text });
-      note(`Participant sent: "${msg.text}" (replay started)`);
+      startTask('participant sent the first request');
+      note(`Participant sent: "${msg.text}"`);
     } else {
       st.typed.push({ id: `u${st.typed.length + 1}`, t: st.time, type: 'request', text: msg.text });
-      note(`Participant sent: "${msg.text}"`);
+      note(`Participant sent: "${msg.text}" (no reply in this replay)`);
     }
     broadcast(true); renderStatus();
   }
-  if (msg.kind === 'accept' && st.accepted == null) { st.accepted = st.time; note("Participant pressed I'd accept this"); broadcast(true); renderStatus(); }
-  if (msg.kind === 'seen') for (const c of msg.changes) trackSeen(c);
-  if (msg.kind === 'scroll' && !msg.atBottom) note(`Participant scrolled up in ${msg.stream}`, true);
+  if (msg.kind === 'accept' && st.accepted == null && st.taskStart != null) {
+    st.accepted = { task: taskTime(), replay: st.time };
+    note(`Participant pressed I'd accept this (replay at ${fmtClock(st.time)})`);
+    broadcast(true); renderStatus();
+  }
+  if (msg.kind === 'seen' && !msg.mirror) for (const c of msg.changes) trackSeen(c);
+  if (msg.kind === 'scroll' && !msg.mirror && !msg.atBottom) note(`Participant scrolled up in ${msg.stream}`, true);
 });
 
 function note(text, quiet) {
+  const t = taskTime();
   const last = st.log[0];
-  if (quiet && last && last.text === text && st.time - last.t < 3) return;
-  st.log.unshift({ t: st.time, text });
-  st.log.length = Math.min(st.log.length, 60);
+  if (quiet && last && last.text === text && t - last.t < 3) return;
+  st.log.unshift({ t, text });
+  st.log.length = Math.min(st.log.length, 80);
 }
 
+// Screen time per block, only while the task clock runs. This is time on screen, not reading time.
 function trackSeen({ id, on }) {
+  if (st.taskStart == null || st.taskStop != null) return;
   const now = performance.now();
   const r = st.onScreen.get(id) || { since: null, total: 0 };
   if (on && r.since == null) r.since = now;
   if (!on && r.since != null) { r.total += now - r.since; r.since = null; }
   st.onScreen.set(id, r);
+}
+function closeAllSeen() {
+  const now = performance.now();
+  for (const r of st.onScreen.values()) if (r.since != null) { r.total += now - r.since; r.since = null; }
 }
 
 // ---------- what the participant may see ----------
@@ -109,11 +153,12 @@ function visibleBlocks() {
   let turn = 0;
   for (const e of all) {
     // The participant's own requests always show; the scripted run shows once it has started.
-    if (e.t > t || (!st.started && !st.typed.includes(e))) continue;
+    const own = st.typed.includes(e);
+    if (!own && (!st.started || e.t > t)) continue;
     // Hidden layers are dropped here, so they never reach the participant window.
     if (e.type === 'thinking' && !v.thinking) continue;
     if (e.type === 'tool' && !v.tools) continue;
-    const running = e.dur && t < e.t + e.dur;
+    const running = !own && e.dur && t < e.t + e.dur;
     if (running && st.variants.running === 'finished') continue;
     const b = running ? partial(e, t) : e;
     if (e.type === 'request' || e.type === 'message') turn++;
@@ -130,6 +175,7 @@ function currentPreview() {
 }
 
 let lastSent = '';
+let lastBeat = 0;
 function broadcast(force) {
   const blocks = visibleBlocks();
   const preview = currentPreview();
@@ -139,25 +185,31 @@ function broadcast(force) {
     view: st.view,
     variants: st.variants,
     task: { title: TASK.title, brief: TASK.brief },
-    timer: { show: st.showTimer, left: TASK.seconds - st.time },
+    timer: { show: st.showTimer, left: Math.max(0, TASK.seconds - Math.floor(taskTime())) },
+    taskRunning: st.taskStart != null && st.taskStop == null,
     accepted: st.accepted != null,
     working: st.started && st.time < END,
     blocks,
   };
   const key = JSON.stringify(state) + preview.id;
-  if (!force && key === lastSent) return;
+  const now = performance.now();
+  // Also send a heartbeat every second, so the participant screen knows the console is there.
+  if (!force && key === lastSent && now - lastBeat < 1000) return;
   lastSent = key;
+  lastBeat = now;
   send({ ...state, preview });
 }
 
-// ---------- clock ----------
+// ---------- clocks ----------
 
 let last = null;
 function frame(now) {
   if (st.playing && last != null) {
-    st.time = Math.min(TASK.seconds, st.time + ((now - last) / 1000) * st.speed);
-    if (st.time >= END && st.time - ((now - last) / 1000) * st.speed < END) note('Agent run finished');
+    const before = st.time;
+    st.time = Math.min(END, st.time + ((now - last) / 1000) * st.speed);
+    if (st.time >= END && before < END) { st.playing = false; note('Replay finished'); }
   }
+  if (!st.timeUp && st.taskStart != null && taskTime() >= TASK.seconds) { st.timeUp = true; stopTask('Time is up'); }
   last = now;
   broadcast();
   renderClock();
@@ -169,6 +221,7 @@ setInterval(renderStatus, 500);
 // ---------- UI ----------
 
 const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const seg = (name, opts, cur) =>
   `<div class="seg" role="radiogroup" aria-label="${name}">${opts.map(([v, l]) => `<button role="radio" aria-checked="${v === cur}" data-set="${name}" data-v="${v}">${l}</button>`).join('')}</div>`;
 
@@ -182,29 +235,47 @@ function renderControls() {
       <select data-variant="${i.key}">${i.opts.map(([v, l], n) => `<option value="${v}" ${st.variants[i.key] === v ? 'selected' : ''}>${l}${n === 0 ? ' (start with)' : ''}</option>`).join('')}</select>
     </label>`).join('')}`).join('');
   $('#timer-show').checked = st.showTimer;
+  $('#autostart').checked = st.autoStart;
+  $('#practice').textContent = PRACTICE_REQUEST;
 }
 
 function renderClock() {
-  $('#clock').textContent = fmtClock(st.time);
-  $('#play').textContent = st.playing ? 'Pause' : st.started ? 'Resume' : 'Start practice task';
+  const running = st.taskStart != null && st.taskStop == null;
+  $('#task-clock').textContent = fmtClock(taskTime());
+  $('#start').disabled = st.taskStart != null;
+  $('#stop').disabled = !running;
+  $('#play').disabled = !st.started || st.time >= END;
+  $('#play').textContent = st.playing ? 'Pause replay' : 'Resume replay';
+  $('#clock').textContent = `${fmtClock(st.time)} / ${fmtClock(END)}`;
   const scrub = $('#scrub');
-  if (document.activeElement !== scrub) scrub.value = Math.min(st.time, END);
+  if (document.activeElement !== scrub) scrub.value = st.time;
 }
 
 function renderStatus() {
-  const left = TASK.seconds - st.time;
+  const left = Math.max(0, TASK.seconds - taskTime());
   const vis = visibleBlocks();
   const counts = vis.reduce((a, b) => ((a[b.type] = (a[b.type] || 0) + 1), a), {});
+  const ago = st.lastPing ? Math.round((performance.now() - st.lastPing) / 1000) : null;
+  const conn = connected()
+    ? 'Connected'
+    : `<span class="warn">Not connected</span> <span class="muted">${ago == null ? '— open it with the button above, in this same browser' : `(last seen ${ago}s ago)`}</span>`;
+  const now = performance.now();
+  const seen = [...st.onScreen.entries()]
+    .map(([id, r]) => [id, r.total + (r.since != null ? now - r.since : 0)])
+    .sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const taskState = st.taskStart == null ? 'Not started' : st.taskStop != null ? (st.timeUp ? 'Time is up' : 'Stopped') : 'Running';
   $('#status').innerHTML = `
     <dl>
-      <div><dt>Participant screen</dt><dd>${st.connected ? 'Connected' : '<span class="warn">Not open</span>'}</dd></div>
+      <div><dt>Participant screen</dt><dd>${conn}</dd></div>
       <div><dt>Layout · view</dt><dd>${st.layout === 'pane' ? 'Pane' : 'In-stream'} · View ${st.view}</dd></div>
-      <div><dt>Time left</dt><dd>${fmtClock(left)}${st.showTimer ? '' : ' <span class="muted">(hidden from participant)</span>'}</dd></div>
-      <div><dt>Accept pressed</dt><dd>${st.accepted == null ? '—' : `at ${fmtClock(st.accepted)}`}</dd></div>
+      <div><dt>Task</dt><dd>${taskState} · ${fmtClock(taskTime())} elapsed · ${fmtClock(left)} left${st.showTimer ? '' : ' <span class="muted">(timer hidden from participant)</span>'}</dd></div>
+      <div><dt>Accept pressed</dt><dd>${st.accepted == null ? '—' : `at ${fmtClock(st.accepted.task)} task time <span class="muted">(replay at ${fmtClock(st.accepted.replay)})</span>`}</dd></div>
       <div><dt>On participant screen now</dt><dd>${['request', 'message', 'thinking', 'tool'].map(k => `${counts[k] || 0} ${k}`).join(' · ')}</dd></div>
     </dl>
-    <h3>Activity</h3>
-    <ol class="log">${st.log.map(l => `<li><time>${fmtClock(l.t)}</time>${l.text.replace(/</g, '&lt;')}</li>`).join('') || '<li class="muted">Nothing yet.</li>'}</ol>`;
+    <h3>Activity <span class="muted">(task time)</span></h3>
+    <ol class="log">${st.log.map(l => `<li><time>${fmtClock(l.t)}</time>${esc(l.text)}</li>`).join('') || '<li class="muted">Nothing yet.</li>'}</ol>
+    <h3>Time on screen <span class="muted">(top blocks, seconds; screen time, not reading time — still to be validated)</span></h3>
+    <ol class="log seen">${seen.map(([id, ms]) => `<li><time>${(ms / 1000).toFixed(1)}</time>${esc(id)}</li>`).join('') || '<li class="muted">Starts with the task.</li>'}</ol>`;
 }
 
 document.addEventListener('click', e => {
@@ -217,20 +288,19 @@ document.addEventListener('click', e => {
     if (k === 'speed') st.speed = +v;
     renderControls(); broadcast(true); renderStatus();
   }
-  if (b.id === 'play') {
-    if (!st.started) { st.started = true; note('Practice task started'); }
-    st.playing = !st.playing;
-    broadcast(true);
-  }
-  if (b.id === 'restart') {
-    Object.assign(st, { time: 0, playing: false, started: false, typed: [], accepted: null, ownFirst: false });
+  if (b.id === 'start') { startTask('moderator'); broadcast(true); }
+  if (b.id === 'stop') { stopTask('Task stopped by moderator'); broadcast(true); }
+  if (b.id === 'play') { st.playing = !st.playing; note(st.playing ? 'Replay resumed' : 'Replay paused'); broadcast(true); }
+  if (b.id === 'reset') {
+    Object.assign(st, { time: 0, playing: false, started: false, typed: [], accepted: null, ownFirst: false, taskStart: null, taskStop: null, timeUp: false });
     st.onScreen.clear();
-    note('Restarted');
+    st.log = [];
+    note('Reset');
     broadcast(true); renderStatus();
   }
-  if (b.id === 'stop') { st.playing = false; note('Run stopped'); }
-  if (b.id === 'end') { st.started = true; st.time = END; st.playing = false; broadcast(true); }
+  if (b.id === 'end') { st.started = true; st.time = END; st.playing = false; note('Replay jumped to end'); broadcast(true); }
   if (b.id === 'open') window.open('index.html', 'agent-veil-participant', 'width=1440,height=900');
+  if (b.id === 'copy-practice') { navigator.clipboard?.writeText(PRACTICE_REQUEST); b.textContent = 'Copied'; setTimeout(() => (b.textContent = 'Copy'), 1200); }
 });
 
 document.addEventListener('change', e => {

@@ -4,7 +4,7 @@
 // - Nothing collapses, blurs or summarises; no labels that point to hidden layers.
 // - Every block is its own element with a stable id (data-block).
 
-import { open, fmtClock } from './protocol.js?v=20261122b';
+import { open, fmtClock } from './protocol.js?v=20261122c';
 
 const $app = document.getElementById('app');
 let S = null;                 // last state from the console
@@ -14,12 +14,39 @@ let lastPreviewId = null;
 let briefOpen = false;
 const pinnedBottom = { stream: true, chat: true, work: true };
 
+let lastState = 0;            // when the console last spoke
+const pendingReq = new Map(); // request id -> timeout, until the console confirms it
+
 const send = open(msg => {
-  if (msg.kind === 'state') { S = msg; render(); }
+  if (msg.kind === 'state') { S = msg; lastState = performance.now(); render(); }
+  if (msg.kind === 'ack' && pendingReq.has(msg.rid)) {
+    clearTimeout(pendingReq.get(msg.rid));
+    pendingReq.delete(msg.rid);
+    const ta = $app.querySelector('.ask textarea');
+    if (ta && ta.dataset.rid === msg.rid) { ta.value = ''; delete ta.dataset.rid; }
+  }
 });
 // The console shows a small mirror of this screen; the mirror doesn't count as the participant.
 const MIRROR = new URLSearchParams(location.search).has('mirror');
 send({ kind: 'hello', mirror: MIRROR });
+// Heartbeat both ways: we ping; the console sends state at least every second.
+setInterval(() => send({ kind: 'ping', mirror: MIRROR }), 1500);
+const online = () => performance.now() - lastState < 3500;
+
+// If the console is gone, say so plainly and don't let sending look like it works.
+function updateOnline() {
+  if (!S || !$app.querySelector('header.top')) return;
+  const up = online();
+  $app.classList.toggle('is-offline', !up);
+  const acc = $app.querySelector('.accept');
+  acc.disabled = !up || !S.taskRunning || !!S.accepted;
+  const sendBtn = $app.querySelector('.ask button');
+  if (sendBtn) sendBtn.disabled = !up;
+  let off = $app.querySelector('.offline');
+  if (!up && !off) { off = document.createElement('div'); off.className = 'offline'; off.textContent = 'Waiting for the session to start.'; $app.prepend(off); }
+  if (up && off) off.remove();
+}
+setInterval(updateOnline, 500);
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -77,13 +104,34 @@ function blockShell(b) {
   return `<div class="block b-tool" data-block="${b.id}" data-turn="${b.turn}"><div class="call" data-call></div><pre class="out" data-out></pre>${time}</div>`;
 }
 
-const tintable = () => S.variants.code === 'tint' || S.variants.errors === 'tint';
+const tintable = () => S.variants.code !== 'plain' || S.variants.errors === 'tint';
+
+// Light syntax highlighting for code in tool output (one of the handover's variants).
+const KW = /\b(const|let|var|function|return|import|from|export|if|else|new|true|false|null|for|of|async|await)\b/;
+function highlight(line) {
+  const re = /((?:^|(?<=\s))\/\/.*$)|('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|`(?:[^`\\]|\\.)*`)|(<\/?[a-zA-Z][\w-]*)|(\b\d+(?:\.\d+)?(?:px|ms|deg|s|kB)?\b)|([A-Za-z_$][\w$-]*)/g;
+  let out = '', i = 0, m;
+  while ((m = re.exec(line))) {
+    out += esc(line.slice(i, m.index));
+    const [tok, com, str, tag, num, word] = m;
+    if (com) out += `<span class="sx-com">${esc(tok)}</span>`;
+    else if (str) out += `<span class="sx-str">${esc(tok)}</span>`;
+    else if (tag) out += `<span class="sx-tag">${esc(tok)}</span>`;
+    else if (num) out += `<span class="sx-num">${esc(tok)}</span>`;
+    else if (word && KW.test(word) && word.match(KW)[0] === word) out += `<span class="sx-kw">${esc(tok)}</span>`;
+    else out += esc(tok);
+    i = m.index + tok.length;
+  }
+  return out + esc(line.slice(i));
+}
+
 function outputHTML(text) {
   return text.split('\n').map(l => {
+    if (S.variants.errors === 'tint' && /\berror\b|failed|^x /i.test(l)) return `<span class="ln-err">${esc(l)}</span>`;
+    if (S.variants.code === 'syntax') return highlight(l);
     let c = '';
     if (S.variants.code === 'tint' && /^\+(\s|$)/.test(l)) c = 'ln-add';
     else if (S.variants.code === 'tint' && /^-(\s|$)/.test(l)) c = 'ln-del';
-    if (S.variants.errors === 'tint' && /\berror\b|failed|^x /i.test(l)) c = 'ln-err';
     return c ? `<span class="${c}">${esc(l)}</span>` : esc(l);
   }).join('\n');
 }
@@ -153,6 +201,7 @@ function render() {
   const acc = $app.querySelector('.accept');
   acc.classList.toggle('is-pressed', !!S.accepted);
   acc.setAttribute('aria-pressed', String(!!S.accepted));
+  updateOnline();
 
   // Layout skeleton changes only when the layout option changes.
   const layoutEl = r('layout');
@@ -179,6 +228,7 @@ function render() {
   if (sig !== structureSig) {
     structureSig = sig;
     shown = new Map();
+    seenAllOff();
     for (const [name, list] of Object.entries(streams)) {
       $app.querySelector(`[data-stream="${name}"]`).innerHTML = list.length || name !== (S.layout === 'pane' ? 'chat' : 'stream')
         ? streamHTML(list, name)
@@ -254,9 +304,12 @@ $app.addEventListener('submit', e => {
   e.preventDefault();
   const ta = e.target.querySelector('textarea');
   const text = ta.value.trim();
-  if (!text) return;
-  send({ kind: 'request', text });
-  ta.value = '';
+  if (!text || !online() || MIRROR) return;
+  const rid = `q${Date.now()}`;
+  ta.dataset.rid = rid;
+  // The text stays in the box until the console confirms it got the message.
+  pendingReq.set(rid, setTimeout(() => { pendingReq.delete(rid); lastState = 0; render(); }, 2000));
+  send({ kind: 'request', rid, text });
   pinnedBottom.stream = pinnedBottom.chat = true;
 });
 $app.addEventListener('keydown', e => {
@@ -275,10 +328,26 @@ $app.addEventListener('mouseover', e => {
 });
 
 // Report which blocks are on screen, so time-on-screen can be logged per block id.
+// Counts only while this tab is visible; re-rendering closes and reopens the count.
+const onNow = new Set();
+function reportSeen(changes) { if (changes.length && !MIRROR) send({ kind: 'seen', changes }); }
+function seenAllOff() {
+  reportSeen([...onNow].map(id => ({ id, on: false })));
+  onNow.clear();
+}
 const io = new IntersectionObserver(entries => {
-  const changes = entries.map(en => ({ id: en.target.dataset.block, on: en.isIntersecting }));
-  if (changes.length && !MIRROR) send({ kind: 'seen', changes });
+  const changes = [];
+  for (const en of entries) {
+    const id = en.target.dataset.block;
+    if (en.isIntersecting && !document.hidden && !onNow.has(id)) { onNow.add(id); changes.push({ id, on: true }); }
+    if (!en.isIntersecting && onNow.has(id)) { onNow.delete(id); changes.push({ id, on: false }); }
+  }
+  reportSeen(changes);
 }, { threshold: 0.5 });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) seenAllOff();
+  else $app.querySelectorAll('[data-block]').forEach(el => { io.unobserve(el); io.observe(el); });
+});
 new MutationObserver(muts => {
   for (const m of muts) for (const n of m.addedNodes) {
     if (n.nodeType !== 1) continue;
@@ -294,4 +363,4 @@ document.addEventListener('pointerdown', e => {
 // Until the console connects, show only the shell.
 setTimeout(() => {
   if (!S) $app.innerHTML = `<div class="waiting">Waiting for the session to start.</div>`;
-}, 800);
+}, 1500);

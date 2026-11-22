@@ -8,7 +8,7 @@
 //   t    seconds from task start      dur  seconds it takes to stream in
 //   type request | message | thinking | tool | preview
 
-import { PAGES } from './cube-pages.js?v=20261122b';
+import { PAGES } from './cube-pages.js?v=20261122c';
 
 export const TASK = {
   title: 'Spinning 3D cube',
