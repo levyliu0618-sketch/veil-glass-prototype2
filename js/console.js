@@ -1,9 +1,9 @@
 // Moderator console. Researcher-only window. Holds the replay content and every control,
 // and sends the participant screen only what the current view allows.
 
-import { open, fmtClock } from './protocol.js';
-import { TASK, EVENTS, END } from './content/practice-cube.js';
-import { PAGES } from './content/cube-pages.js';
+import { open, fmtClock } from './protocol.js?v=20261122b';
+import { TASK, EVENTS, END } from './content/practice-cube.js?v=20261122b';
+import { PAGES } from './content/cube-pages.js?v=20261122b';
 
 // ---------- state ----------
 
