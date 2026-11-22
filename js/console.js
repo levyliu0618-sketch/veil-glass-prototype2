@@ -5,9 +5,9 @@
 //   task clock   real time since the task started; drives the timer and every logged time
 //   replay clock position in the scripted run; pause, speed and scrubbing change only this
 
-import { open, fmtClock } from './protocol.js?v=20261122d';
-import { TASK, EVENTS, END } from './content/practice-cube.js?v=20261122d';
-import { PAGES } from './content/cube-pages.js?v=20261122d';
+import { open, fmtClock } from './protocol.js?v=20261122e';
+import { TASK, EVENTS, END } from './content/practice-cube.js?v=20261122e';
+import { PAGES } from './content/cube-pages.js?v=20261122e';
 
 // ---------- state ----------
 
@@ -86,6 +86,7 @@ const send = open(msg => {
       if (!was) note('Participant screen connected');
     }
     if (msg.kind === 'hello') broadcast(true);
+    else tick(performance.now());
   }
   if (msg.kind === 'request') {
     send({ kind: 'ack', rid: msg.rid });
@@ -207,7 +208,10 @@ function broadcast(force) {
 // ---------- clocks ----------
 
 let last = null;
-function frame(now) {
+// One clock step. Runs on animation frames when the console is visible, and also on every
+// ping from the participant screen: browsers stop animation frames in background tabs, and
+// the participant must not see "Connection lost" just because the console tab is behind another.
+function tick(now) {
   if (st.playing && last != null) {
     const before = st.time;
     st.time = Math.min(END, st.time + ((now - last) / 1000) * st.speed);
@@ -217,9 +221,10 @@ function frame(now) {
   last = now;
   broadcast();
   renderClock();
-  requestAnimationFrame(frame);
 }
+function frame(now) { tick(now); requestAnimationFrame(frame); }
 requestAnimationFrame(frame);
+setInterval(() => tick(performance.now()), 1000);
 setInterval(renderStatus, 500);
 
 // ---------- UI ----------
