@@ -2,7 +2,7 @@
 // Console → participant: { kind: 'state', ... }   (only content the current view allows)
 // Participant → console: { kind: 'hello' } | { kind: 'request', text } | { kind: 'accept' } | { kind: 'seen', ... }
 
-export const CHANNEL = 'agent-veil-session';
+export const CHANNEL = 'agent-veil-session-structure';
 
 export function open(onMessage) {
   const ch = new BroadcastChannel(CHANNEL);
