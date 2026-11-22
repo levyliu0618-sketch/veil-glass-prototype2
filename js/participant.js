@@ -4,7 +4,7 @@
 // - Nothing collapses, blurs or summarises; no labels that point to hidden layers.
 // - Every block is its own element with a stable id (data-block).
 
-import { open, fmtClock } from './protocol.js?v=20261122g';
+import { open, fmtClock } from './protocol.js?v=20261122h';
 
 const $app = document.getElementById('app');
 let S = null;                 // last state from the console
@@ -85,7 +85,7 @@ function shell() {
     <header class="top">
       <span class="view-label" data-r="view"></span>
       <div class="brief">
-        <button class="brief-btn" data-act="brief" aria-expanded="false"><span data-r="title"></span></button>
+        <button class="brief-btn" data-act="brief" aria-expanded="false" aria-haspopup="true" title="Show the full task"><span data-r="title"></span><svg class="chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></button>
         <div class="brief-pop" data-r="briefpop" hidden></div>
       </div>
       <div class="top-right">

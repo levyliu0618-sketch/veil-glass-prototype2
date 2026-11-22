@@ -25,7 +25,7 @@ The earlier Glass Sheet concept (frosted veil over the terminal, six views) is k
 
 **Time on screen** per block is reported by the participant screen (only while its tab is visible) and summed in the console. It is screen time, not reading time, and still needs validating before it is used as data.
 
-Without the visual layer: [/structure/](https://levyliu0618-sketch.github.io/veil-glass-prototype2/structure/console.html) (branch `structure-only`). First visual pass: branch `visual-v1-archive`. Earlier versions of this study UI: branches [`study-ui-v2-archive`](https://github.com/levyliu0618-sketch/veil-glass-prototype2/tree/study-ui-v2-archive) and [`study-ui-v1-archive`](https://github.com/levyliu0618-sketch/veil-glass-prototype2/tree/study-ui-v1-archive).
+Without the visual layer: [/structure/](https://levyliu0618-sketch.github.io/veil-glass-prototype2/structure/console.html) (branch `structure-only`). Earlier visual passes: branches `visual-v1-archive`, `visual-v2-archive`. Earlier versions of this study UI: branches [`study-ui-v2-archive`](https://github.com/levyliu0618-sketch/veil-glass-prototype2/tree/study-ui-v2-archive) and [`study-ui-v1-archive`](https://github.com/levyliu0618-sketch/veil-glass-prototype2/tree/study-ui-v1-archive).
 
 | View | Thinking | Tool calls |
 | --- | --- | --- |

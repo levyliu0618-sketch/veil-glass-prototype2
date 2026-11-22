@@ -5,9 +5,9 @@
 //   task clock   real time since the task started; drives the timer and every logged time
 //   replay clock position in the scripted run; pause, speed and scrubbing change only this
 
-import { open, fmtClock } from './protocol.js?v=20261122g';
-import { TASK, EVENTS, END } from './content/practice-cube.js?v=20261122g';
-import { PAGES } from './content/cube-pages.js?v=20261122g';
+import { open, fmtClock } from './protocol.js?v=20261122h';
+import { TASK, EVENTS, END } from './content/practice-cube.js?v=20261122h';
+import { PAGES } from './content/cube-pages.js?v=20261122h';
 
 // ---------- state ----------
 

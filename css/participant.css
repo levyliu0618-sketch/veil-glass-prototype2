@@ -153,9 +153,10 @@ button { cursor: pointer; }
   --ink-3: #66666b;
   --you: rgba(40, 36, 30, 0.07);
   --dark: #1f1f22;
-  --hi: rgba(255, 255, 255, 0.78);
-  --lo: rgba(150, 144, 134, 0.42);
-  --raise: -6px -6px 14px var(--hi), 7px 8px 18px var(--lo), inset 1px 1px 0 rgba(255, 255, 255, 0.55);
+  --hi: rgba(255, 255, 255, 0.6);
+  --lo: rgba(150, 144, 134, 0.32);
+  --raise: -5px -5px 12px var(--hi), 5px 6px 14px var(--lo), inset 1px 1px 0 rgba(255, 255, 255, 0.45);
+  --raise-flat: -2px -2px 6px var(--hi), 2px 3px 8px rgba(150, 144, 134, 0.26), inset 1px 1px 0 rgba(255, 255, 255, 0.45);
   --raise-sm: -3px -3px 7px var(--hi), 3px 4px 9px var(--lo), inset 1px 1px 0 rgba(255, 255, 255, 0.6);
   --press: inset 3px 3px 7px rgba(150, 144, 134, 0.4), inset -3px -3px 7px rgba(255, 255, 255, 0.7);
   --key: inset 1px 1px 0 rgba(255, 255, 255, 0.16), 3px 4px 10px rgba(60, 56, 50, 0.35), -2px -2px 6px rgba(255, 255, 255, 0.6);
@@ -165,7 +166,7 @@ body { background: var(--page); }
 #app { padding: 14px 16px 16px; gap: 14px; }
 
 /* Top bar: one raised strip, like a nav module */
-.top { height: 58px; padding: 0 10px 0 20px; border: 0; border-radius: 20px; background: var(--surface); box-shadow: var(--raise); }
+.top { height: 58px; padding: 0 10px 0 20px; border: 0; border-radius: 20px; background: var(--surface); box-shadow: var(--raise-flat); }
 .view-label { font-weight: 500; color: var(--ink-3); }
 .brief-btn { color: var(--ink); font-weight: 600; border-radius: 10px; padding: 6px 12px; }
 .brief-btn:hover, .brief-btn[aria-expanded="true"] { background: var(--surface); box-shadow: var(--press); }
@@ -228,3 +229,9 @@ body { background: var(--page); }
 .offline { margin: 0; border: 0; border-radius: 14px; padding: 9px 18px; background: #efe5cf; color: #4b3a12; font-weight: 500; box-shadow: -3px -3px 7px var(--hi), 3px 4px 9px rgba(150, 130, 90, 0.35); }
 .offline[data-phase="ended"] { background: var(--surface); color: var(--ink); box-shadow: var(--raise-sm); }
 .ask textarea:disabled { cursor: default; background: transparent; }
+
+/* Brief: a small chevron says the title opens the full task */
+.brief-btn { display: inline-flex; align-items: center; gap: 6px; }
+.brief-btn .chev { flex: none; width: 14px; height: 14px; fill: none; stroke: var(--ink-3); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform .15s; }
+.brief-btn[aria-expanded="true"] .chev { transform: rotate(180deg); }
+.brief-btn > span { overflow: hidden; text-overflow: ellipsis; }

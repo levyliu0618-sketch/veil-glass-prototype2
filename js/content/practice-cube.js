@@ -8,7 +8,7 @@
 //   t    seconds from task start      dur  seconds it takes to stream in
 //   type request | message | thinking | tool | preview
 
-import { PAGES, SRC } from './cube-pages.js?v=20261122g';
+import { PAGES, SRC } from './cube-pages.js?v=20261122h';
 
 const plus = src => src.split('\n').map(l => '+ ' + l).join('\n');
 const minus = src => src.split('\n').map(l => '- ' + l).join('\n');
