@@ -4,7 +4,7 @@
 // - Nothing collapses, blurs or summarises; no labels that point to hidden layers.
 // - Every block is its own element with a stable id (data-block).
 
-import { open, fmtClock } from './protocol.js?v=20261122c';
+import { open, fmtClock } from './protocol.js?v=20261122d';
 
 const $app = document.getElementById('app');
 let S = null;                 // last state from the console
@@ -18,7 +18,7 @@ let lastState = 0;            // when the console last spoke
 const pendingReq = new Map(); // request id -> timeout, until the console confirms it
 
 const send = open(msg => {
-  if (msg.kind === 'state') { S = msg; lastState = performance.now(); render(); }
+  if (msg.kind === 'state') { S = msg; lastState = performance.now(); everConnected = true; render(); }
   if (msg.kind === 'ack' && pendingReq.has(msg.rid)) {
     clearTimeout(pendingReq.get(msg.rid));
     pendingReq.delete(msg.rid);
@@ -33,18 +33,46 @@ send({ kind: 'hello', mirror: MIRROR });
 setInterval(() => send({ kind: 'ping', mirror: MIRROR }), 1500);
 const online = () => performance.now() - lastState < 3500;
 
-// If the console is gone, say so plainly and don't let sending look like it works.
+// One status line under the top bar. Four states, each with its own wording and controls:
+//   not started yet (never heard from the console)  -> "Waiting for the session to start."
+//   connected, task running                          -> no banner; "Working…" while the agent works
+//   connected, task ended by the researcher          -> "Task ended." Sending and accept are off.
+//   heard from the console before, now silent        -> "Connection lost. Waiting to reconnect."
+// "Working…" only shows when connected and the task is running, so it never outlives a stop or a drop.
+let everConnected = false;
+function phase() {
+  if (!online()) return everConnected ? 'lost' : 'waiting';
+  if (S && S.taskEnded) return 'ended';
+  return 'live';
+}
+const BANNER = {
+  waiting: 'Waiting for the session to start.',
+  lost: 'Connection lost. Waiting to reconnect.',
+  ended: 'Task ended.',
+};
 function updateOnline() {
   if (!S || !$app.querySelector('header.top')) return;
-  const up = online();
-  $app.classList.toggle('is-offline', !up);
+  const ph = phase();
+  const up = ph === 'live';
+  $app.classList.toggle('is-offline', ph === 'waiting' || ph === 'lost');
+  $app.dataset.phase = ph;
   const acc = $app.querySelector('.accept');
   acc.disabled = !up || !S.taskRunning || !!S.accepted;
   const sendBtn = $app.querySelector('.ask button');
   if (sendBtn) sendBtn.disabled = !up;
+  const ta = $app.querySelector('.ask textarea');
+  if (ta) {
+    ta.placeholder = ph === 'ended' ? 'The task has ended.' : 'Ask the agent to build or change something';
+    ta.disabled = ph === 'ended';   // when the connection drops, typing stays possible and the text is kept
+  }
+  const w = $app.querySelector('[data-r="working"]');
+  if (w) w.hidden = !(up && S.taskRunning && S.working && S.variants.working === 'line');
   let off = $app.querySelector('.offline');
-  if (!up && !off) { off = document.createElement('div'); off.className = 'offline'; off.textContent = 'Waiting for the session to start.'; $app.prepend(off); }
-  if (up && off) off.remove();
+  if (BANNER[ph]) {
+    if (!off) { off = document.createElement('div'); off.className = 'offline'; off.setAttribute('role', 'status'); $app.querySelector('header.top').after(off); }
+    off.textContent = BANNER[ph];
+    off.dataset.phase = ph;
+  } else if (off) off.remove();
 }
 setInterval(updateOnline, 500);
 
@@ -245,8 +273,8 @@ function render() {
   }
 
   // Working indicator: one shared line, identical in every view.
-  const w = r('working');
-  if (w) w.hidden = !(S.working && S.variants.working === 'line');
+  // (Visibility is set in updateOnline, which also runs on its own timer, so a stop or a
+  //  dropped connection removes it even when no new state arrives.)
 
   // Scrolling: follow unless the reader scrolled up (or always follow, per variant).
   for (const name of Object.keys(streams)) {

@@ -5,9 +5,9 @@
 //   task clock   real time since the task started; drives the timer and every logged time
 //   replay clock position in the scripted run; pause, speed and scrubbing change only this
 
-import { open, fmtClock } from './protocol.js?v=20261122c';
-import { TASK, EVENTS, END } from './content/practice-cube.js?v=20261122c';
-import { PAGES } from './content/cube-pages.js?v=20261122c';
+import { open, fmtClock } from './protocol.js?v=20261122d';
+import { TASK, EVENTS, END } from './content/practice-cube.js?v=20261122d';
+import { PAGES } from './content/cube-pages.js?v=20261122d';
 
 // ---------- state ----------
 
@@ -89,6 +89,8 @@ const send = open(msg => {
   }
   if (msg.kind === 'request') {
     send({ kind: 'ack', rid: msg.rid });
+    // After the task has ended the participant screen disables sending; ignore anything that slips through.
+    if (st.taskStop != null) { note(`Ignored a message sent after the task ended: "${msg.text}"`); return; }
     if (!st.started && st.autoStart) {
       // A fixed practice replay: any first request starts the same cube run. Their own words
       // replace the scripted request; nothing pretends to answer them.
@@ -102,7 +104,7 @@ const send = open(msg => {
     }
     broadcast(true); renderStatus();
   }
-  if (msg.kind === 'accept' && st.accepted == null && st.taskStart != null) {
+  if (msg.kind === 'accept' && st.accepted == null && st.taskStart != null && st.taskStop == null) {
     st.accepted = { task: taskTime(), replay: st.time };
     note(`Participant pressed I'd accept this (replay at ${fmtClock(st.time)})`);
     broadcast(true); renderStatus();
@@ -187,8 +189,10 @@ function broadcast(force) {
     task: { title: TASK.title, brief: TASK.brief },
     timer: { show: st.showTimer, left: Math.max(0, TASK.seconds - Math.floor(taskTime())) },
     taskRunning: st.taskStart != null && st.taskStop == null,
+    taskEnded: st.taskStop != null,
     accepted: st.accepted != null,
-    working: st.started && st.time < END,
+    // "Working…" only while the task is running and the replay hasn't finished.
+    working: st.taskStart != null && st.taskStop == null && st.started && st.time < END,
     blocks,
   };
   const key = JSON.stringify(state) + preview.id;

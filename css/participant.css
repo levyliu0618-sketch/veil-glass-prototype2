@@ -126,7 +126,10 @@ button { cursor: pointer; }
 .sx-com { color: var(--ink-3); font-style: italic; }
 
 /* Console not reachable: say so, and don't let sending look like it works */
-.offline { position: fixed; top: 52px; left: 0; right: 0; z-index: 20; padding: 6px 18px; background: #fff7e6; border-bottom: 1px solid #ecdcb5; color: #5a4416; font-size: 13px; }
+.offline { flex: none; padding: 6px 18px; background: #fff7e6; border-bottom: 1px solid #ecdcb5; color: #5a4416; font-size: 13px; }
 .ask button:disabled { background: var(--line-2); cursor: default; }
 .accept:disabled { opacity: 0.45; cursor: default; }
 .accept.is-pressed:disabled { opacity: 1; }
+/* Task ended is not a problem, so it is neutral rather than amber */
+.offline[data-phase="ended"] { background: var(--sub); border-bottom-color: var(--line); color: var(--ink-2); }
+.ask textarea:disabled { cursor: default; }

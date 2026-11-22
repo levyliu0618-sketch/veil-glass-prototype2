@@ -12,13 +12,20 @@ The earlier Glass Sheet concept (frosted veil over the terminal, six views) is k
 1. Open the **moderator console**. It has a small mirror of the participant screen, so one window is enough for a team demo.
 2. For a real setup, press **Open participant screen** and put that window on the shared screen. The two windows talk over a `BroadcastChannel` on the same machine (no server), so open both in the same browser.
 3. **This is a fixed practice replay, not a live agent.** Whatever the first request says, the same scripted cube run plays; later messages appear and are logged but get no reply. Start the task with **Start practice task**, or let the participant start it by sending the practice request (*Build a spinning 3D cube that changes colour when I click it.*). Then switch **Layout option** and **View** (A–D) while it runs.
-4. The two windows connect through the browser (`BroadcastChannel`), so they must be open in the **same browser on the same computer**, in either order. That matches the plan in the handover: the app runs on the team's computer and remote participants drive it over Zoom. If the console is closed, the participant screen says *Waiting for the session to start.*, sending is disabled, and typed text is kept.
+4. The two windows connect through the browser (`BroadcastChannel`), so they must be open in the **same browser on the same computer**, in either order. That matches the plan in the handover: the app runs on the team's computer and remote participants drive it over Zoom. The participant screen has four states:
+
+   | Situation | Participant screen |
+   | --- | --- |
+   | Console not open yet | *Waiting for the session to start.* Sending is off. |
+   | Task running | *Working…* while the agent works; no status line. |
+   | Researcher presses **Stop task** (or time runs out) | *Working…* goes, *Task ended.* appears, sending and "I'd accept this" are off. |
+   | Console closed or lost mid-session | *Working…* goes, *Connection lost. Waiting to reconnect.* appears, sending is off, typed text is kept. |
 
 **Two clocks.** The *task clock* is real time from the start of the task: it drives the participant's timer and every logged time, including when "I'd accept this" was pressed. The *replay clock* is only the position in the scripted run; pausing, speeding up or scrubbing it doesn't touch the task clock.
 
 **Time on screen** per block is reported by the participant screen (only while its tab is visible) and summed in the console. It is screen time, not reading time, and still needs validating before it is used as data.
 
-Earlier version of this study UI: branch [`study-ui-v1-archive`](https://github.com/levyliu0618-sketch/veil-glass-prototype2/tree/study-ui-v1-archive).
+Earlier versions of this study UI: branches [`study-ui-v2-archive`](https://github.com/levyliu0618-sketch/veil-glass-prototype2/tree/study-ui-v2-archive) and [`study-ui-v1-archive`](https://github.com/levyliu0618-sketch/veil-glass-prototype2/tree/study-ui-v1-archive).
 
 | View | Thinking | Tool calls |
 | --- | --- | --- |
