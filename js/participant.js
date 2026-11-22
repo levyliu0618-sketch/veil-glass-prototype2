@@ -4,7 +4,7 @@
 // - Nothing collapses, blurs or summarises; no labels that point to hidden layers.
 // - Every block is its own element with a stable id (data-block).
 
-import { open, fmtClock } from './protocol.js?v=20261122e';
+import { open, fmtClock } from './protocol.js?v=20261122f';
 
 const $app = document.getElementById('app');
 let S = null;                 // last state from the console

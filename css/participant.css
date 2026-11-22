@@ -133,3 +133,90 @@ button { cursor: pointer; }
 /* Task ended is not a problem, so it is neutral rather than amber */
 .offline[data-phase="ended"] { background: var(--sub); border-bottom-color: var(--line); color: var(--ink-2); }
 .ask textarea:disabled { cursor: default; }
+
+/* =====================================================================
+   Visual layer (Levy). Structure above is unchanged; branch `structure-only`
+   has the page without this layer.
+   References: light grey ground, soft white surfaces, dark text, a dark
+   selected state (calendar ref), and a light raised / pressed material on
+   controls only (neumorphic ref, but shallower). Text areas stay flat.
+   Same in both layouts and all four views. No blur, no fading of old content.
+   ===================================================================== */
+:root {
+  --page: #e7e8ea;
+  --surface: #f8f8f9;
+  --sub: #eeeff1;
+  --line: #dcdee2;
+  --line-2: #c9ccd1;
+  --ink: #17181a;
+  --ink-2: #3d4148;
+  --ink-3: #686d75;
+  --you: #e3e5e8;
+  --dark: #1d1e21;
+  /* material: a faint top highlight and a soft drop, never deep */
+  --raise: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(20, 22, 26, 0.08), 0 3px 8px rgba(20, 22, 26, 0.06);
+  --press: inset 0 1px 3px rgba(20, 22, 26, 0.14), inset 0 0 0 1px rgba(20, 22, 26, 0.04);
+  --panel: 0 1px 2px rgba(20, 22, 26, 0.05), 0 8px 24px rgba(20, 22, 26, 0.05);
+}
+body { background: var(--page); }
+
+/* Top bar sits on the grey ground */
+.top { background: transparent; border-bottom: 0; height: 56px; }
+.view-label { font-weight: 500; color: var(--ink-3); }
+.brief-btn { color: var(--ink); font-weight: 600; letter-spacing: -0.005em; border-radius: 8px; }
+.brief-btn:hover, .brief-btn[aria-expanded="true"] { background: var(--surface); box-shadow: var(--raise); }
+.brief-pop { background: var(--surface); border-color: var(--line); border-radius: 12px; box-shadow: 0 16px 40px rgba(20, 22, 26, 0.14); color: var(--ink); }
+.timer { color: var(--ink-2); font-weight: 500; }
+
+/* Accept: the one dark control, like the selected range in the calendar ref */
+.accept { height: 34px; padding: 0 16px; border-radius: 10px; border: 0; background: var(--dark); color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 1px 2px rgba(0, 0, 0, 0.2), 0 4px 10px rgba(0, 0, 0, 0.12); }
+.accept:hover { background: #2b2d31; }
+.accept:active { box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.45); }
+.accept.is-pressed { background: var(--sub); color: var(--ink); box-shadow: var(--press); }
+.accept:disabled { opacity: 1; background: #c7cacf; color: #f4f5f6; box-shadow: none; }
+.accept.is-pressed:disabled { background: var(--sub); color: var(--ink-2); box-shadow: var(--press); }
+
+/* Panels: light surfaces on the grey ground, same 40/60 split */
+.layout { padding: 0 14px 14px; gap: 14px; }
+.layout[data-layout="stream"], .layout[data-layout="pane"] { grid-template-columns: 2fr 3fr; }
+.col-stream, .col-chat { background: var(--surface); border: 1px solid rgba(255, 255, 255, 0.7); border-radius: 16px; box-shadow: var(--panel); overflow: hidden; }
+.col-preview, .col-work { padding: 0; gap: 14px; }
+.preview { border: 1px solid rgba(255, 255, 255, 0.7); border-radius: 16px; background: #fff; box-shadow: var(--panel); }
+.preview-bar { background: var(--surface); border-bottom-color: var(--line); padding: 9px 14px; }
+.preview-bar i { background: var(--line-2); }
+.work-scroller { flex: 1; background: var(--surface); border: 1px solid rgba(255, 255, 255, 0.7); border-radius: 16px; box-shadow: var(--panel); padding: 16px 20px 12px; }
+.scroller { padding: 20px 22px 12px; }
+
+/* Request box: a shallow pressed-in well; send is a small raised dark key */
+.ask { margin: 0 14px 14px; border: 0; border-radius: 14px; background: var(--sub); box-shadow: var(--press); }
+.ask:focus-within { box-shadow: var(--press), 0 0 0 2px rgba(23, 24, 26, 0.18); }
+.ask textarea { color: var(--ink); }
+.ask textarea::placeholder { color: var(--ink-3); }
+.ask button { width: 32px; height: 32px; border-radius: 9px; background: var(--dark);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 1px 2px rgba(0, 0, 0, 0.2); }
+.ask button:active { box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.45); }
+.ask button:disabled { background: #c7cacf; box-shadow: none; }
+
+/* Jump to latest: a light raised key */
+.jump { border: 0; background: var(--surface); color: var(--ink); font-weight: 500; box-shadow: var(--raise), 0 6px 16px rgba(20, 22, 26, 0.1); }
+.jump:active { box-shadow: var(--press); }
+
+/* Blocks stay flat and fully legible */
+.b-request .bubble { background: var(--you); color: var(--ink); }
+.b-message .prose { color: var(--ink); }
+.b-thinking .prose { color: var(--ink-2); }
+.b-label { color: var(--ink-3); letter-spacing: 0.01em; }
+.call { color: var(--ink); }
+.out { color: var(--ink-2); }
+[data-tool="split"] .out, .group-tools .out { background: var(--sub); }
+[data-tool="box"] .b-tool, .group-tools { background: transparent; border-color: var(--line); }
+[data-tool="box"] .b-tool { background: var(--sub); }
+[data-thinking="quote"] .b-thinking { background: var(--sub); }
+.working { color: var(--ink-3); font-weight: 500; }
+
+/* Status line: in the flow, on the grey ground, no extra colour except for a problem */
+.offline { margin: 0 14px 10px; border: 0; border-radius: 10px; padding: 7px 14px; background: #f3ecdc; color: #4e3c14; box-shadow: inset 0 0 0 1px #e3d6b6; font-weight: 500; }
+.offline[data-phase="ended"] { background: var(--surface); color: var(--ink); box-shadow: var(--raise); }
+/* Accepted: clearly pressed in, not a fresh light key */
+.accept.is-pressed, .accept.is-pressed:disabled { background: #dfe1e5; color: var(--ink-2); box-shadow: inset 0 2px 4px rgba(20, 22, 26, 0.18); }
